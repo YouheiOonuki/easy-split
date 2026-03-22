@@ -387,7 +387,7 @@
       (excludedAmount > 0 ? ' (対象外: ' + excludedAmount.toLocaleString() + ' 円)' : '') +
       ' / 総額: ' + totalAmount.toLocaleString() + ' 円';
 
-    copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
+    copyBtn.textContent = navigator.share ? '📤 結果を共有（LINE・メール等）' : '📋 結果をコピー（LINE・メール用）';
     copyBtn.classList.remove('copied');
 
     // Scroll to results
@@ -416,30 +416,46 @@
   function copyResults() {
     if (!lastResults) return;
     const text = buildShareText(lastResults, lastTotalAmount, lastExcludedAmount);
-    navigator.clipboard.writeText(text).then(() => {
-      copyBtn.textContent = '✅ コピーしました！';
+
+    const showSuccess = (label) => {
+      copyBtn.textContent = label || '✅ コピーしました！';
       copyBtn.classList.add('copied');
       setTimeout(() => {
-        copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
+        copyBtn.textContent = navigator.share ? '📤 結果を共有（LINE・メール等）' : '📋 結果をコピー（LINE・メール用）';
         copyBtn.classList.remove('copied');
       }, 2500);
-    }).catch(() => {
-      // Fallback for environments without clipboard API
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
+    };
+
+    // Web Share API: Android/iOS ではネイティブ共有シートを開く
+    if (navigator.share) {
+      navigator.share({ title: '割り勘清算', text: text }).catch(() => {});
+      return;
+    }
+
+    // Clipboard API (HTTPS 環境)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showSuccess()).catch(() => execCopy(text, showSuccess));
+      return;
+    }
+
+    execCopy(text, showSuccess);
+  }
+
+  function execCopy(text, onSuccess) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    // Off-screen but not hidden — required for mobile selection
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;outline:none;background:transparent;font-size:16px;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length); // mobile requires this
+    try {
       document.execCommand('copy');
-      document.body.removeChild(ta);
-      copyBtn.textContent = '✅ コピーしました！';
-      copyBtn.classList.add('copied');
-      setTimeout(() => {
-        copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
-        copyBtn.classList.remove('copied');
-      }, 2500);
-    });
+      onSuccess();
+    } catch (_) {}
+    document.body.removeChild(ta);
   }
 
   // ---- History ----
