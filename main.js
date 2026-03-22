@@ -18,8 +18,7 @@
   const resultSection = document.getElementById('resultSection');
   const resultList = document.getElementById('resultList');
   const resultTotal = document.getElementById('resultTotal');
-  const qrSection = document.getElementById('qrSection');
-  const qrList = document.getElementById('qrList');
+  const copyBtn = document.getElementById('copyBtn');
   const historyToggle = document.getElementById('historyToggle');
   const historyList = document.getElementById('historyList');
   const clearHistoryBtn = document.getElementById('clearHistory');
@@ -221,7 +220,6 @@
     }
 
     displayResults(results, totalAmount, excludedAmount);
-    generateQRCodes(results);
     saveHistory(results, totalAmount, excludedAmount);
   }
 
@@ -363,7 +361,15 @@
   }
 
   // ---- Display Results ----
+  let lastResults = null;
+  let lastTotalAmount = 0;
+  let lastExcludedAmount = 0;
+
   function displayResults(results, totalAmount, excludedAmount) {
+    lastResults = results;
+    lastTotalAmount = totalAmount;
+    lastExcludedAmount = excludedAmount;
+
     resultSection.classList.remove('hidden');
     resultList.innerHTML = '';
 
@@ -381,41 +387,58 @@
       (excludedAmount > 0 ? ' (対象外: ' + excludedAmount.toLocaleString() + ' 円)' : '') +
       ' / 総額: ' + totalAmount.toLocaleString() + ' 円';
 
+    copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
+    copyBtn.classList.remove('copied');
+
     // Scroll to results
     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ---- QR Codes ----
-  function generateQRCodes(results) {
-    qrSection.classList.remove('hidden');
-    qrList.innerHTML = '';
-
-    if (typeof QRCode === 'undefined') {
-      qrList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">QRコードライブラリを読み込めませんでした。</p>';
-      return;
-    }
-
+  // ---- Copy ----
+  function buildShareText(results, totalAmount, excludedAmount) {
+    const sum = results.reduce((s, r) => s + r.amount, 0);
+    const lines = ['【割り勘清算】', ''];
     results.forEach(r => {
-      const item = document.createElement('div');
-      item.className = 'qr-item';
+      lines.push(r.name + '：' + r.amount.toLocaleString() + '円');
+    });
+    lines.push('');
+    lines.push('─'.repeat(16));
+    lines.push('合計　　：' + sum.toLocaleString() + '円');
+    if (excludedAmount > 0) {
+      lines.push('対象外　：' + excludedAmount.toLocaleString() + '円');
+      lines.push('総額　　：' + totalAmount.toLocaleString() + '円');
+    }
+    lines.push('');
+    lines.push('※ easy-split で計算しました');
+    return lines.join('\n');
+  }
 
-      const label = document.createElement('div');
-      label.className = 'qr-label';
-      label.textContent = r.name + ': ' + r.amount.toLocaleString() + '円';
-
-      const qrDiv = document.createElement('div');
-      item.appendChild(label);
-      item.appendChild(qrDiv);
-      qrList.appendChild(item);
-
-      new QRCode(qrDiv, {
-        text: r.name + ' ' + r.amount + '円',
-        width: 120,
-        height: 120,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
+  function copyResults() {
+    if (!lastResults) return;
+    const text = buildShareText(lastResults, lastTotalAmount, lastExcludedAmount);
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = '✅ コピーしました！';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
+        copyBtn.classList.remove('copied');
+      }, 2500);
+    }).catch(() => {
+      // Fallback for environments without clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = '✅ コピーしました！';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = '📋 結果をコピー（LINE・メール用）';
+        copyBtn.classList.remove('copied');
+      }, 2500);
     });
   }
 
@@ -482,6 +505,7 @@
   function bindEvents() {
     addParticipantBtn.addEventListener('click', () => addParticipant('', 1.0));
     calculateBtn.addEventListener('click', calculate);
+    copyBtn.addEventListener('click', copyResults);
 
     organizerMode.addEventListener('change', () => {
       organizerSettings.classList.toggle('hidden', !organizerMode.checked);

@@ -536,31 +536,26 @@ input[type="number"] {
   color: var(--text-secondary);
 }
 
-/* ---- QR Code ---- */
-.qr-note {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-
-.qr-item {
-  text-align: center;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: var(--result-bg);
-  border-radius: 8px;
-}
-
-.qr-item .qr-label {
+/* ---- Copy Button ---- */
+.btn-copy {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  height: 44px;
   font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 8px;
+  margin-top: 12px;
+  border-radius: 10px;
+  transition: background 0.2s, color 0.2s;
 }
 
-.qr-item canvas,
-.qr-item img {
-  display: block;
-  margin: 0 auto;
+.btn-copy:active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-copy.copied {
+  background: var(--accent);
+  color: #fff;
 }
 
 /* ---- History ---- */
