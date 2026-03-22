@@ -43,18 +43,11 @@
     loadTheme();
     loadHistoryToggle();
 
-    const isFirstVisit = !localStorage.getItem(LS_INITIALIZED);
-    if (isFirstVisit) {
-      // Default values for first visit
-      totalAmountInput.value = 6000;
-      addParticipant('Aさん', 1.0);
-      addParticipant('Bさん', 1.0);
-      addParticipant('Cさん', 1.0);
-      localStorage.setItem(LS_INITIALIZED, '1');
-    } else {
-      // Start with one empty participant
-      addParticipant('', 1.0);
-    }
+    // Always start with 3 default participants
+    totalAmountInput.value = 6000;
+    addParticipant('Aさん', 1.0);
+    addParticipant('Bさん', 1.0);
+    addParticipant('Cさん', 1.0);
 
     renderHistory();
     bindEvents();
@@ -276,32 +269,40 @@
     return checked ? checked.value : 'exact';
   }
 
-  // Round to 2 significant digits (e.g. 12344→12000, 7540→7500, 980→980)
-  function roundToSig2(n) {
-    if (n === 0) return 0;
+  // Get the sig2 rounding unit for a given number (e.g. 2500→100, 12000→1000)
+  function sig2Unit(n) {
+    if (n === 0) return 1;
     const abs = Math.abs(n);
     const digits = Math.floor(Math.log10(abs)) + 1;
-    if (digits <= 2) return Math.round(n);
-    const factor = Math.pow(10, digits - 2);
-    return Math.round(n / factor) * factor;
+    if (digits <= 2) return 1;
+    return Math.pow(10, digits - 2);
+  }
+
+  // Floor to 2 significant digits (e.g. 2592→2500, 12344→12000)
+  function floorToSig2(n) {
+    if (n === 0) return 0;
+    const unit = sig2Unit(n);
+    if (unit <= 1) return Math.floor(n);
+    return Math.floor(n / unit) * unit;
   }
 
   function adjustRounding(rawResults, targetTotal) {
     const mode = getRoundingMode();
-    const roundFn = mode === 'sig2' ? roundToSig2 : Math.round;
 
-    // Round all amounts
+    if (mode === 'sig2') {
+      return adjustRoundingSig2(rawResults, targetTotal);
+    }
+
+    // Exact mode: round to 1 yen, adjust max person
     const results = rawResults.map(r => ({
       name: r.name,
-      amount: roundFn(r.raw),
+      amount: Math.round(r.raw),
       weight: r.weight
     }));
 
-    // Calculate difference due to rounding
     const currentTotal = results.reduce((sum, r) => sum + r.amount, 0);
-    let diff = targetTotal - currentTotal;
+    const diff = targetTotal - currentTotal;
 
-    // Adjust the person with the highest payment to match total
     if (diff !== 0 && results.length > 0) {
       let maxIdx = 0;
       for (let i = 1; i < results.length; i++) {
@@ -313,6 +314,52 @@
     }
 
     return results;
+  }
+
+  function adjustRoundingSig2(rawResults, targetTotal) {
+    // Step 1: Floor everyone to sig2
+    const results = rawResults.map(r => {
+      const floored = floorToSig2(r.raw);
+      return {
+        name: r.name,
+        amount: floored,
+        weight: r.weight,
+        unit: sig2Unit(r.raw),           // rounding unit for this person
+        fraction: r.raw - floored         // how much was cut off
+      };
+    });
+
+    // Step 2: Calculate deficit
+    let deficit = targetTotal - results.reduce((sum, r) => sum + r.amount, 0);
+
+    // Step 3: Distribute deficit by bumping people up by their unit,
+    //         prioritizing those with the largest fractional part (closest to rounding up)
+    const indices = results.map((_, i) => i);
+    indices.sort((a, b) => results[b].fraction - results[a].fraction);
+
+    for (const idx of indices) {
+      if (deficit <= 0) break;
+      const unit = results[idx].unit;
+      if (unit <= deficit) {
+        results[idx].amount += unit;
+        deficit -= unit;
+      }
+    }
+
+    // Step 4: Any small remainder that can't be distributed in clean units
+    //         goes to the person with the highest payment
+    if (deficit !== 0 && results.length > 0) {
+      let maxIdx = 0;
+      for (let i = 1; i < results.length; i++) {
+        if (results[i].amount > results[maxIdx].amount) {
+          maxIdx = i;
+        }
+      }
+      results[maxIdx].amount += deficit;
+    }
+
+    // Clean up temp fields
+    return results.map(r => ({ name: r.name, amount: r.amount, weight: r.weight }));
   }
 
   // ---- Display Results ----
