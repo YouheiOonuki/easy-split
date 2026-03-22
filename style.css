@@ -331,6 +331,50 @@ input[type="number"] {
   background: rgba(233, 69, 96, 0.4);
 }
 
+/* ---- Rounding Mode ---- */
+.rounding-mode-group {
+  display: flex;
+  gap: 8px;
+}
+
+.rounding-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 44px;
+}
+
+.rounding-option:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.rounding-option input[type="radio"] {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.rounding-label {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.rounding-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  text-align: center;
+}
+
 /* ---- Buttons ---- */
 .btn {
   display: block;

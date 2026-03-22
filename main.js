@@ -23,6 +23,8 @@
   const historyToggle = document.getElementById('historyToggle');
   const historyList = document.getElementById('historyList');
   const clearHistoryBtn = document.getElementById('clearHistory');
+  const roundingRadios = document.querySelectorAll('input[name="roundingMode"]');
+  const roundingHint = document.getElementById('roundingHint');
   const themeBtns = document.querySelectorAll('.theme-btn');
 
   // ---- State ----
@@ -269,11 +271,29 @@
     return result;
   }
 
+  function getRoundingMode() {
+    const checked = document.querySelector('input[name="roundingMode"]:checked');
+    return checked ? checked.value : 'exact';
+  }
+
+  // Round to 2 significant digits (e.g. 12344→12000, 7540→7500, 980→980)
+  function roundToSig2(n) {
+    if (n === 0) return 0;
+    const abs = Math.abs(n);
+    const digits = Math.floor(Math.log10(abs)) + 1;
+    if (digits <= 2) return Math.round(n);
+    const factor = Math.pow(10, digits - 2);
+    return Math.round(n / factor) * factor;
+  }
+
   function adjustRounding(rawResults, targetTotal) {
+    const mode = getRoundingMode();
+    const roundFn = mode === 'sig2' ? roundToSig2 : Math.round;
+
     // Round all amounts
     const results = rawResults.map(r => ({
       name: r.name,
-      amount: Math.round(r.raw),
+      amount: roundFn(r.raw),
       weight: r.weight
     }));
 
@@ -281,9 +301,8 @@
     const currentTotal = results.reduce((sum, r) => sum + r.amount, 0);
     let diff = targetTotal - currentTotal;
 
-    // Adjust the person with the highest payment
+    // Adjust the person with the highest payment to match total
     if (diff !== 0 && results.length > 0) {
-      // Find index of person with highest amount
       let maxIdx = 0;
       for (let i = 1; i < results.length; i++) {
         if (results[i].amount > results[maxIdx].amount) {
@@ -436,6 +455,14 @@
 
     themeBtns.forEach(btn => {
       btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    });
+
+    roundingRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        roundingHint.textContent = radio.value === 'sig2'
+          ? '上位2桁でキリよく丸めます（例: 12,344→12,000）'
+          : '1円単位で計算します';
+      });
     });
   }
 

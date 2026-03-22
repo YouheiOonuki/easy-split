@@ -91,6 +91,22 @@
       </div>
     </section>
 
+    <!-- 端数モード -->
+    <section class="card">
+      <h2>🔢 端数処理</h2>
+      <div class="rounding-mode-group">
+        <label class="rounding-option">
+          <input type="radio" name="roundingMode" value="exact" checked>
+          <span class="rounding-label">そのまま（1円単位）</span>
+        </label>
+        <label class="rounding-option">
+          <input type="radio" name="roundingMode" value="sig2">
+          <span class="rounding-label">キリよく（上位2桁）</span>
+        </label>
+      </div>
+      <p class="rounding-hint" id="roundingHint">1円単位で計算します</p>
+    </section>
+
     <!-- 計算ボタン -->
     <button id="calculateBtn" class="btn btn-calculate">計算する</button>
 
