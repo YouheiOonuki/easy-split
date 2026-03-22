@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>プライバシーポリシー | easy-split</title>
+  <meta name="description" content="easy-splitのプライバシーポリシーです。">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-title"><a href="index.html" style="color:inherit;text-decoration:none;">easy-split</a></h1>
+    <p class="app-subtitle">プライバシーポリシー</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>はじめに</h2>
+      <p>
+        easy-split（以下「本サービス」）は、利用者のプライバシーを尊重し、
+        個人情報の保護に努めます。本プライバシーポリシーでは、本サービスにおける
+        情報の取り扱いについて説明します。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>個人情報の収集について</h2>
+      <p>
+        <strong>本サービスは、利用者の個人情報を一切収集しません。</strong>
+      </p>
+      <p style="margin-top:8px;">
+        本サービスはサーバーを持たない完全な静的 Web アプリケーションです。
+        利用者が入力したデータ（参加者名、金額など）は、すべてお使いのブラウザの
+        localStorage に保存され、外部サーバーへの送信は一切行いません。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>localStorage の使用</h2>
+      <p>本サービスでは、以下の目的で localStorage を使用します。</p>
+      <ul style="padding-left:20px;line-height:2;margin-top:8px;">
+        <li><strong>テーマ設定の保存</strong> — 選択したテーマ（Dark / Simple / Metal）を記憶</li>
+        <li><strong>計算履歴の保存</strong> — 過去5回分の計算結果を保存（ON/OFF 可能）</li>
+        <li><strong>名前の自動補完</strong> — 過去に入力した参加者名を記憶し、入力を補助</li>
+        <li><strong>初回訪問判定</strong> — デフォルト値の表示判定</li>
+      </ul>
+      <p style="margin-top:8px;">
+        これらのデータはお使いのブラウザにのみ保存されます。
+        ブラウザの設定からいつでも削除できます。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Cookie の使用</h2>
+      <p>
+        本サービス自体は Cookie を使用しません。
+        ただし、将来的に導入される可能性のある広告サービス（Google AdSense 等）が
+        Cookie を使用する場合があります。
+      </p>
+      <p style="margin-top:8px;">
+        広告サービスによる Cookie の使用については、各サービス提供者のプライバシーポリシーをご確認ください。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>広告について</h2>
+      <p>
+        本サービスでは、サービスの維持・改善のため、将来的に第三者配信の広告サービス
+        （Google AdSense 等）を導入する可能性があります。
+      </p>
+      <p style="margin-top:8px;">
+        これらの広告サービスは、利用者の興味に基づいた広告を表示するために
+        Cookie やその他の技術を使用することがあります。
+        利用者は、ブラウザの設定により Cookie を無効にすることができます。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>アクセス解析について</h2>
+      <p>
+        本サービスでは、現時点でアクセス解析ツールは使用していません。
+        将来的にアクセス解析を導入する場合は、本ポリシーを更新してお知らせします。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>お子様のプライバシー</h2>
+      <p>
+        本サービスは特定の年齢層を対象としたものではありませんが、
+        13歳未満のお子様から意図的に個人情報を収集することはありません。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>ポリシーの変更</h2>
+      <p>
+        本プライバシーポリシーは、必要に応じて変更することがあります。
+        変更後のポリシーは、本ページに掲載された時点で効力を生じるものとします。
+      </p>
+      <p style="margin-top:12px;color:var(--text-secondary);font-size:0.85rem;">
+        制定日：2026年3月22日
+      </p>
+    </section>
+  </main>
+
+  <div class="ad-container">
+    <!-- AD_PLACEHOLDER: Google AdSense code will be inserted here -->
+  </div>
+
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <a href="index.html">ホーム</a>
+      <a href="about.html">About</a>
+      <a href="terms.html">利用規約</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
+  </footer>
+
+  <script>
+    const theme = localStorage.getItem('easysplit_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  </script>
+</body>
+</html>

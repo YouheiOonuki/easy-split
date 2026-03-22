@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About | easy-split</title>
+  <meta name="description" content="easy-splitについて — 飲み会・食事会の割り勘を簡単に計算できるWebアプリです。">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-title"><a href="index.html" style="color:inherit;text-decoration:none;">easy-split</a></h1>
+    <p class="app-subtitle">About</p>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>easy-split とは</h2>
+      <p>
+        easy-split は、飲み会や食事会の清算をスマートフォンで素早く行うための
+        「割り勘＋傾斜清算」Web アプリケーションです。
+      </p>
+      <p style="margin-top:12px;">
+        幹事さんの「清算が面倒」「傾斜をつけたいけど計算が複雑」という悩みを解決するために開発されました。
+        スマホのブラウザで開くだけで、すぐに使えます。アプリのインストールは不要です。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>主な機能</h2>
+      <ul style="padding-left:20px;line-height:2;">
+        <li><strong>割り勘計算</strong> — 合計金額を参加者で均等に分割</li>
+        <li><strong>傾斜清算（係数割り）</strong> — 各参加者に 0.5〜2.0 の係数を設定し、支払い額に差をつけることが可能</li>
+        <li><strong>幹事持ち出しゼロモード</strong> — 幹事の支払い額を指定し、残額を他の参加者で自動配分</li>
+        <li><strong>QR コード生成</strong> — 各参加者の支払い額を QR コードで共有</li>
+        <li><strong>テーマ切り替え</strong> — Dark / Simple / Metal の3テーマから選択</li>
+        <li><strong>履歴機能</strong> — 過去5回の計算結果を保存（ON/OFF 可能）</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>スマホ前提の設計</h2>
+      <p>
+        easy-split は、スマートフォンでの操作を最優先に設計されています。
+        大きなタップ領域、見やすいフォントサイズ、直感的なスライダー操作で、
+        飲み会の席でもストレスなく清算ができます。
+      </p>
+      <p style="margin-top:12px;">
+        データはすべてお使いのブラウザの localStorage に保存されます。
+        サーバーへのデータ送信は一切ありません。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>開発者</h2>
+      <p>
+        <strong>Youhei</strong><br>
+        より便利な清算ツールを目指して開発・改善を続けています。
+        ご意見やご要望がございましたら、GitHub リポジトリの Issues からお気軽にお寄せください。
+      </p>
+    </section>
+  </main>
+
+  <div class="ad-container">
+    <!-- AD_PLACEHOLDER: Google AdSense code will be inserted here -->
+  </div>
+
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <a href="index.html">ホーム</a>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
+  </footer>
+
+  <script>
+    const theme = localStorage.getItem('easysplit_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+  </script>
+</body>
+</html>

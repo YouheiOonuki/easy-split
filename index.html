@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>easy-split | Simple &amp; Fair Bill Splitter</title>
+  <meta name="description" content="A simple and fair bill-splitting tool with weighted calculation for group events.">
+  <meta name="keywords" content="bill split, drinking party, group payment, weighted split,幹事,割り勘,清算">
+
+  <!-- OGP -->
+  <meta property="og:title" content="easy-split | Simple &amp; Fair Bill Splitter">
+  <meta property="og:description" content="A simple and fair bill-splitting tool with weighted calculation for group events.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://youheioonuki.github.io/easy-split/">
+  <meta property="og:image" content="https://youheioonuki.github.io/easy-split/icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon.png" type="image/png">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "easy-split",
+    "description": "A simple and fair bill-splitting tool with weighted calculation for group events.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "All",
+    "url": "https://youheioonuki.github.io/easy-split/"
+  }
+  </script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <h1 class="app-title">easy-split</h1>
+    <p class="app-subtitle">割り勘・傾斜清算アプリ</p>
+    <div class="theme-switcher">
+      <button class="theme-btn" data-theme="dark" title="Dark">🌙</button>
+      <button class="theme-btn" data-theme="simple" title="Simple">☀️</button>
+      <button class="theme-btn" data-theme="metal" title="Metal">⚙️</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 合計金額 -->
+    <section class="card">
+      <h2>💰 合計金額</h2>
+      <div class="amount-input-group">
+        <input type="number" id="totalAmount" inputmode="numeric" placeholder="合計金額を入力" min="0" step="100">
+        <span class="currency">円</span>
+      </div>
+      <div class="amount-input-group sub">
+        <label for="excludedAmount">割り勘対象外</label>
+        <input type="number" id="excludedAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
+        <span class="currency">円</span>
+      </div>
+    </section>
+
+    <!-- 参加者 -->
+    <section class="card">
+      <h2>👥 参加者</h2>
+      <div id="participantsList"></div>
+      <button id="addParticipant" class="btn btn-add">＋ 参加者を追加</button>
+    </section>
+
+    <!-- 幹事ゼロモード -->
+    <section class="card">
+      <h2>🎯 幹事モード</h2>
+      <div class="toggle-row">
+        <label for="organizerMode">幹事の持ち出しゼロモード</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="organizerMode">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="organizerSettings" class="hidden">
+        <div class="organizer-select-group">
+          <label for="organizerSelect">幹事</label>
+          <select id="organizerSelect"></select>
+        </div>
+        <div class="amount-input-group sub">
+          <label for="organizerAmount">幹事の支払い額</label>
+          <input type="number" id="organizerAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
+          <span class="currency">円</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 計算ボタン -->
+    <button id="calculateBtn" class="btn btn-calculate">計算する</button>
+
+    <!-- 結果 -->
+    <section id="resultSection" class="card hidden">
+      <h2>📊 計算結果</h2>
+      <div id="resultList"></div>
+      <div id="resultTotal" class="result-total"></div>
+    </section>
+
+    <!-- QRコード -->
+    <section id="qrSection" class="card hidden">
+      <h2>📱 QRコード</h2>
+      <p class="qr-note">各参加者の支払い額をQRコードで共有</p>
+      <div id="qrList"></div>
+    </section>
+
+    <!-- 履歴 -->
+    <section class="card">
+      <h2>📋 履歴</h2>
+      <div class="toggle-row">
+        <label for="historyToggle">履歴を保存</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="historyToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="historyList"></div>
+      <button id="clearHistory" class="btn btn-secondary hidden">履歴をクリア</button>
+    </section>
+  </main>
+
+  <!-- AdSense -->
+  <div class="ad-container">
+    <!-- AD_PLACEHOLDER: Google AdSense code will be inserted here -->
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <a href="about.html">About</a>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
