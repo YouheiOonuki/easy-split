@@ -72,54 +72,60 @@
       <button id="addParticipant" class="btn btn-add">＋ 参加者を追加</button>
     </section>
 
-    <!-- 幹事ゼロモード -->
+    <!-- 幹事 -->
     <section class="card">
-      <h2>🎯 幹事モード</h2>
+      <h2>🎯 幹事</h2>
+      <div class="organizer-select-group">
+        <label for="organizerSelect">幹事</label>
+        <select id="organizerSelect"></select>
+      </div>
+      <p class="field-hint">集金単位で割り切れない端数は幹事が調整します</p>
       <div class="toggle-row">
-        <label for="organizerMode">幹事の持ち出しゼロモード</label>
+        <label for="organizerFixed">幹事の支払い額を固定する</label>
         <label class="toggle-switch">
-          <input type="checkbox" id="organizerMode">
+          <input type="checkbox" id="organizerFixed">
           <span class="toggle-slider"></span>
         </label>
       </div>
       <div id="organizerSettings" class="hidden">
-        <div class="organizer-select-group">
-          <label for="organizerSelect">幹事</label>
-          <select id="organizerSelect"></select>
-        </div>
         <div class="amount-input-group sub">
           <label for="organizerAmount">幹事の支払い額</label>
           <input type="number" id="organizerAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
           <span class="currency">円</span>
         </div>
+        <p class="field-hint">0円にすると幹事の持ち出しゼロ。残りを他の参加者で係数割りします</p>
       </div>
     </section>
 
-    <!-- 端数モード -->
+    <!-- 集金単位 -->
     <section class="card">
-      <h2>🔢 端数処理</h2>
-      <div class="rounding-mode-group">
-        <label class="rounding-option">
-          <input type="radio" name="roundingMode" value="exact" checked>
-          <span class="rounding-label">そのまま（1円単位）</span>
-        </label>
-        <label class="rounding-option">
-          <input type="radio" name="roundingMode" value="sig2">
-          <span class="rounding-label">キリよく（上位2桁）</span>
-        </label>
+      <h2>🔢 集金単位</h2>
+      <div class="unit-group" role="radiogroup" aria-label="集金単位">
+        <label class="unit-option"><input type="radio" name="unit" value="auto" checked><span>自動</span></label>
+        <label class="unit-option"><input type="radio" name="unit" value="1"><span>1円</span></label>
+        <label class="unit-option"><input type="radio" name="unit" value="10"><span>10円</span></label>
+        <label class="unit-option"><input type="radio" name="unit" value="100"><span>100円</span></label>
+        <label class="unit-option"><input type="radio" name="unit" value="500"><span>500円</span></label>
+        <label class="unit-option"><input type="radio" name="unit" value="1000"><span>1000円</span></label>
       </div>
-      <p class="rounding-hint" id="roundingHint">1円単位で計算します</p>
+      <p class="field-hint center" id="unitHint"></p>
     </section>
 
     <!-- 計算ボタン -->
+    <p id="formError" class="form-error hidden" role="alert"></p>
     <button id="calculateBtn" class="btn btn-calculate">計算する</button>
+    <button id="resetBtn" class="btn btn-link">入力をリセット</button>
 
     <!-- 結果 -->
     <section id="resultSection" class="card hidden">
       <h2>📊 計算結果</h2>
       <div id="resultList"></div>
+      <p id="resultNote" class="field-hint"></p>
       <div id="resultTotal" class="result-total"></div>
-      <button id="copyBtn" class="btn btn-copy">📋 結果をコピー（LINE・メール用）</button>
+      <div class="share-actions">
+        <button id="shareBtn" class="btn btn-copy hidden">📤 共有</button>
+        <button id="copyBtn" class="btn btn-copy">📋 コピー</button>
+      </div>
     </section>
 
     <!-- 履歴 -->
@@ -152,6 +158,7 @@
     <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
   </footer>
 
+  <script src="split.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

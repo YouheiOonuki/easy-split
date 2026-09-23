@@ -1,0 +1,8 @@
+{
+  "name": "easy-split",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,134 +1,187 @@
 /* ========================================
-   easy-split — Main Application Logic
+   easy-split — UI / State
    ======================================== */
 
 (function () {
   'use strict';
 
-  // ---- DOM References ----
-  const totalAmountInput = document.getElementById('totalAmount');
-  const excludedAmountInput = document.getElementById('excludedAmount');
-  const participantsList = document.getElementById('participantsList');
-  const addParticipantBtn = document.getElementById('addParticipant');
-  const organizerMode = document.getElementById('organizerMode');
-  const organizerSettings = document.getElementById('organizerSettings');
-  const organizerSelect = document.getElementById('organizerSelect');
-  const organizerAmountInput = document.getElementById('organizerAmount');
-  const calculateBtn = document.getElementById('calculateBtn');
-  const resultSection = document.getElementById('resultSection');
-  const resultList = document.getElementById('resultList');
-  const resultTotal = document.getElementById('resultTotal');
-  const copyBtn = document.getElementById('copyBtn');
-  const historyToggle = document.getElementById('historyToggle');
-  const historyList = document.getElementById('historyList');
-  const clearHistoryBtn = document.getElementById('clearHistory');
-  const roundingRadios = document.querySelectorAll('input[name="roundingMode"]');
-  const roundingHint = document.getElementById('roundingHint');
+  const $ = id => document.getElementById(id);
+
+  const totalAmountInput = $('totalAmount');
+  const excludedAmountInput = $('excludedAmount');
+  const participantsList = $('participantsList');
+  const addParticipantBtn = $('addParticipant');
+  const organizerSelect = $('organizerSelect');
+  const organizerFixedToggle = $('organizerFixed');
+  const organizerSettings = $('organizerSettings');
+  const organizerAmountInput = $('organizerAmount');
+  const unitRadios = document.querySelectorAll('input[name="unit"]');
+  const unitHint = $('unitHint');
+  const formError = $('formError');
+  const calculateBtn = $('calculateBtn');
+  const resetBtn = $('resetBtn');
+  const resultSection = $('resultSection');
+  const resultList = $('resultList');
+  const resultNote = $('resultNote');
+  const resultTotal = $('resultTotal');
+  const shareBtn = $('shareBtn');
+  const copyBtn = $('copyBtn');
+  const historyToggle = $('historyToggle');
+  const historyList = $('historyList');
+  const clearHistoryBtn = $('clearHistory');
   const themeBtns = document.querySelectorAll('.theme-btn');
 
-  // ---- State ----
-  let participants = [];
-  let participantIdCounter = 0;
-
-  // ---- LocalStorage Keys ----
   const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
   const LS_HISTORY_ON = 'easysplit_history_on';
   const LS_NAMES = 'easysplit_names';
-  const LS_INITIALIZED = 'easysplit_initialized';
+  const LS_DRAFT = 'easysplit_draft';
+
+  const COPY_LABEL = '📋 コピー';
+  const SHARE_LABEL = '📤 共有';
+
+  const defaultState = () => ({
+    total: 6000,
+    excluded: 0,
+    participants: [
+      { id: 0, name: 'Aさん', weight: 1.0 },
+      { id: 1, name: 'Bさん', weight: 1.0 },
+      { id: 2, name: 'Cさん', weight: 1.0 }
+    ],
+    nextId: 3,
+    organizerId: 0,
+    organizerFixed: false,
+    organizerAmount: 0,
+    unit: 'auto'
+  });
+
+  let state;
+  let lastResult = null;
+
+  // ---- Storage helpers (storage can throw in private mode) ----
+  function lsGet(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+  function lsSet(key, value) {
+    try { localStorage.setItem(key, value); } catch { /* ignore */ }
+  }
+  function lsRemove(key) {
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+  }
+  function lsJson(key, fallback) {
+    try { return JSON.parse(lsGet(key)) || fallback; } catch { return fallback; }
+  }
+
+  // ---- Draft (survives the tab being killed while switching to LINE) ----
+  function loadDraft() {
+    const d = lsJson(LS_DRAFT, null);
+    if (!d || !Array.isArray(d.participants) || d.participants.length === 0) return defaultState();
+    return Object.assign(defaultState(), d);
+  }
+
+  function saveDraft() {
+    lsSet(LS_DRAFT, JSON.stringify(state));
+  }
 
   // ---- Init ----
   function init() {
     loadTheme();
-    loadHistoryToggle();
+    historyToggle.checked = lsGet(LS_HISTORY_ON) !== '0';
+    shareBtn.classList.toggle('hidden', !navigator.share);
 
-    // Always start with 3 default participants
-    totalAmountInput.value = 6000;
-    addParticipant('Aさん', 1.0);
-    addParticipant('Bさん', 1.0);
-    addParticipant('Cさん', 1.0);
-
+    state = loadDraft();
+    applyStateToForm();
     renderHistory();
     bindEvents();
+  }
+
+  function applyStateToForm() {
+    totalAmountInput.value = state.total || '';
+    excludedAmountInput.value = state.excluded || 0;
+    organizerFixedToggle.checked = state.organizerFixed;
+    organizerSettings.classList.toggle('hidden', !state.organizerFixed);
+    organizerAmountInput.value = state.organizerAmount || 0;
+    unitRadios.forEach(r => { r.checked = r.value === String(state.unit); });
+    updateUnitHint();
+    renderParticipants();
     updateOrganizerSelect();
   }
 
   // ---- Theme ----
   function loadTheme() {
-    const saved = localStorage.getItem(LS_THEME) || 'dark';
-    setTheme(saved);
+    setTheme(lsGet(LS_THEME) || 'dark');
   }
 
   function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(LS_THEME, theme);
-    themeBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === theme);
-    });
+    lsSet(LS_THEME, theme);
+    themeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
   }
 
   // ---- Participants ----
-  function addParticipant(name, weight) {
-    const id = participantIdCounter++;
-    participants.push({ id, name: name || '', weight: weight || 1.0 });
+  function addParticipant() {
+    state.participants.push({ id: state.nextId++, name: '', weight: 1.0 });
     renderParticipants();
     updateOrganizerSelect();
+    saveDraft();
+    const inputs = participantsList.querySelectorAll('.participant-name');
+    inputs[inputs.length - 1].focus();
   }
 
   function removeParticipant(id) {
-    if (participants.length <= 1) return;
-    participants = participants.filter(p => p.id !== id);
+    if (state.participants.length <= 1) return;
+    state.participants = state.participants.filter(p => p.id !== id);
     renderParticipants();
     updateOrganizerSelect();
+    saveDraft();
   }
 
   function renderParticipants() {
     participantsList.innerHTML = '';
-    const savedNames = getSavedNames();
 
-    participants.forEach((p) => {
+    const datalist = document.createElement('datalist');
+    datalist.id = 'savedNames';
+    lsJson(LS_NAMES, []).forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      datalist.appendChild(opt);
+    });
+    participantsList.appendChild(datalist);
+
+    state.participants.forEach((p, i) => {
       const row = document.createElement('div');
       row.className = 'participant-row';
 
-      // Name input
       const nameInput = document.createElement('input');
       nameInput.type = 'text';
       nameInput.className = 'participant-name';
       nameInput.placeholder = '名前';
       nameInput.value = p.name;
-      nameInput.setAttribute('list', 'nameList-' + p.id);
+      nameInput.setAttribute('list', 'savedNames');
+      nameInput.setAttribute('aria-label', (i + 1) + '人目の名前');
       nameInput.addEventListener('input', () => {
         p.name = nameInput.value;
         updateOrganizerSelect();
       });
-      nameInput.addEventListener('blur', () => {
-        saveName(p.name);
-      });
+      nameInput.addEventListener('blur', () => saveName(p.name));
 
-      // Datalist for autocomplete
-      const datalist = document.createElement('datalist');
-      datalist.id = 'nameList-' + p.id;
-      savedNames.forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = n;
-        datalist.appendChild(opt);
-      });
-
-      // Remove button
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn-remove';
       removeBtn.textContent = '✕';
+      removeBtn.setAttribute('aria-label', (p.name || (i + 1) + '人目') + 'を削除');
       removeBtn.addEventListener('click', () => removeParticipant(p.id));
 
-      // Weight group
       const weightGroup = document.createElement('div');
       weightGroup.className = 'participant-weight-group';
 
+      const sliderId = 'weight-' + p.id;
       const weightLabel = document.createElement('label');
       weightLabel.textContent = '係数';
+      weightLabel.htmlFor = sliderId;
 
       const slider = document.createElement('input');
       slider.type = 'range';
+      slider.id = sliderId;
       slider.className = 'weight-slider';
       slider.min = '0.5';
       slider.max = '2.0';
@@ -144,422 +197,281 @@
         weightValue.textContent = p.weight.toFixed(1);
       });
 
-      weightGroup.appendChild(weightLabel);
-      weightGroup.appendChild(slider);
-      weightGroup.appendChild(weightValue);
-
-      row.appendChild(nameInput);
-      row.appendChild(datalist);
-      row.appendChild(removeBtn);
-      row.appendChild(weightGroup);
-
+      weightGroup.append(weightLabel, slider, weightValue);
+      row.append(nameInput, removeBtn, weightGroup);
       participantsList.appendChild(row);
     });
   }
 
   function updateOrganizerSelect() {
-    const currentValue = organizerSelect.value;
+    if (!state.participants.some(p => p.id === state.organizerId)) {
+      state.organizerId = state.participants[0].id;
+    }
     organizerSelect.innerHTML = '';
-    participants.forEach((p) => {
+    state.participants.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = p.name || '(名前なし)';
       organizerSelect.appendChild(opt);
     });
-    // Restore selection if still valid
-    if ([...organizerSelect.options].some(o => o.value === currentValue)) {
-      organizerSelect.value = currentValue;
-    }
-  }
-
-  // ---- Name Autocomplete ----
-  function getSavedNames() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_NAMES)) || [];
-    } catch {
-      return [];
-    }
+    organizerSelect.value = String(state.organizerId);
   }
 
   function saveName(name) {
-    if (!name || !name.trim()) return;
-    const names = getSavedNames();
-    const trimmed = name.trim();
-    if (!names.includes(trimmed)) {
-      names.push(trimmed);
-      if (names.length > 50) names.shift();
-      localStorage.setItem(LS_NAMES, JSON.stringify(names));
-    }
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
+    const names = lsJson(LS_NAMES, []);
+    if (names.includes(trimmed)) return;
+    names.push(trimmed);
+    if (names.length > 50) names.shift();
+    lsSet(LS_NAMES, JSON.stringify(names));
+  }
+
+  // ---- Unit ----
+  function updateUnitHint() {
+    unitHint.textContent = state.unit === 'auto'
+      ? '1人あたりの金額に合わせて自動で選びます（約3,000円なら100円単位）'
+      : state.unit.toLocaleString() + '円単位で集金します';
   }
 
   // ---- Calculation ----
-  function calculate() {
-    const totalAmount = parseInt(totalAmountInput.value) || 0;
-    const excludedAmount = parseInt(excludedAmountInput.value) || 0;
-    const splittableAmount = totalAmount - excludedAmount;
+  function toInt(value) {
+    const n = parseInt(value, 10);
+    return Number.isNaN(n) ? 0 : n;
+  }
 
-    if (splittableAmount <= 0 || participants.length === 0) {
-      alert('合計金額と参加者を確認してください。');
+  function showError(message) {
+    formError.textContent = message;
+    formError.classList.remove('hidden');
+    resultSection.classList.add('hidden');
+    formError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function calculate() {
+    const res = EasySplit.computeSplit({
+      total: state.total,
+      excluded: state.excluded,
+      people: state.participants.map(p => ({ id: p.id, name: p.name.trim() || '(名前なし)', weight: p.weight })),
+      organizerId: state.organizerId,
+      organizerFixedAmount: state.organizerFixed ? state.organizerAmount : null,
+      unit: state.unit
+    });
+
+    if (res.error) {
+      showError(res.error);
       return;
     }
 
-    // Filter out participants with no name
-    const validParticipants = participants.map(p => ({
-      ...p,
-      name: p.name.trim() || '(名前なし)'
-    }));
+    formError.classList.add('hidden');
+    lastResult = Object.assign({ total: state.total, excluded: state.excluded }, res);
+    displayResults(lastResult);
+    saveHistory(lastResult);
+  }
 
-    let results;
+  function unitLabel(unit) {
+    return unit === 1 ? '1円単位' : unit.toLocaleString() + '円単位';
+  }
 
-    if (organizerMode.checked) {
-      const organizerId = parseInt(organizerSelect.value);
-      const organizerAmount = parseInt(organizerAmountInput.value) || 0;
-      results = calculateWithOrganizer(validParticipants, splittableAmount, organizerId, organizerAmount);
-    } else {
-      results = calculateNormal(validParticipants, splittableAmount);
+  function resultNoteText(r) {
+    let text = unitLabel(r.unit) + 'で計算しました。';
+    if (r.remainder > 0) {
+      const absorber = r.results.find(x => x.id === r.absorberId);
+      text += '端数 ' + r.remainder.toLocaleString() + '円 は ' + absorber.name +
+        (absorber.isOrganizer ? '（幹事）' : '') + ' が負担します。';
     }
-
-    displayResults(results, totalAmount, excludedAmount);
-    saveHistory(results, totalAmount, excludedAmount);
+    return text;
   }
 
-  function calculateNormal(people, amount) {
-    const totalWeight = people.reduce((sum, p) => sum + p.weight, 0);
-    const rawResults = people.map(p => ({
-      name: p.name,
-      raw: (amount * p.weight) / totalWeight,
-      weight: p.weight
-    }));
-
-    return adjustRounding(rawResults, amount);
-  }
-
-  function calculateWithOrganizer(people, amount, organizerId, organizerAmount) {
-    const organizer = people.find(p => p.id === organizerId);
-    const others = people.filter(p => p.id !== organizerId);
-
-    if (!organizer || others.length === 0) {
-      return calculateNormal(people, amount);
-    }
-
-    const remainingAmount = amount - organizerAmount;
-    const totalOtherWeight = others.reduce((sum, p) => sum + p.weight, 0);
-
-    const rawResults = others.map(p => ({
-      name: p.name,
-      raw: (remainingAmount * p.weight) / totalOtherWeight,
-      weight: p.weight
-    }));
-
-    const adjustedOthers = adjustRounding(rawResults, remainingAmount);
-
-    // Insert organizer
-    const result = [
-      { name: organizer.name + ' (幹事)', amount: organizerAmount, weight: organizer.weight },
-      ...adjustedOthers
-    ];
-
-    return result;
-  }
-
-  function getRoundingMode() {
-    const checked = document.querySelector('input[name="roundingMode"]:checked');
-    return checked ? checked.value : 'exact';
-  }
-
-  // Get the sig2 rounding unit for a given number (e.g. 2500→100, 12000→1000)
-  function sig2Unit(n) {
-    if (n === 0) return 1;
-    const abs = Math.abs(n);
-    const digits = Math.floor(Math.log10(abs)) + 1;
-    if (digits <= 2) return 1;
-    return Math.pow(10, digits - 2);
-  }
-
-  // Floor to 2 significant digits (e.g. 2592→2500, 12344→12000)
-  function floorToSig2(n) {
-    if (n === 0) return 0;
-    const unit = sig2Unit(n);
-    if (unit <= 1) return Math.floor(n);
-    return Math.floor(n / unit) * unit;
-  }
-
-  function adjustRounding(rawResults, targetTotal) {
-    const mode = getRoundingMode();
-
-    if (mode === 'sig2') {
-      return adjustRoundingSig2(rawResults, targetTotal);
-    }
-
-    // Exact mode: round to 1 yen, adjust max person
-    const results = rawResults.map(r => ({
-      name: r.name,
-      amount: Math.round(r.raw),
-      weight: r.weight
-    }));
-
-    const currentTotal = results.reduce((sum, r) => sum + r.amount, 0);
-    const diff = targetTotal - currentTotal;
-
-    if (diff !== 0 && results.length > 0) {
-      let maxIdx = 0;
-      for (let i = 1; i < results.length; i++) {
-        if (results[i].amount > results[maxIdx].amount) {
-          maxIdx = i;
-        }
-      }
-      results[maxIdx].amount += diff;
-    }
-
-    return results;
-  }
-
-  function adjustRoundingSig2(rawResults, targetTotal) {
-    // Step 1: Floor everyone to sig2
-    const results = rawResults.map(r => {
-      const floored = floorToSig2(r.raw);
-      return {
-        name: r.name,
-        amount: floored,
-        weight: r.weight,
-        unit: sig2Unit(r.raw),           // rounding unit for this person
-        fraction: r.raw - floored         // how much was cut off
-      };
-    });
-
-    // Step 2: Calculate deficit
-    let deficit = targetTotal - results.reduce((sum, r) => sum + r.amount, 0);
-
-    // Step 3: Distribute deficit by bumping people up by their unit,
-    //         prioritizing those with the largest fractional part (closest to rounding up)
-    const indices = results.map((_, i) => i);
-    indices.sort((a, b) => results[b].fraction - results[a].fraction);
-
-    for (const idx of indices) {
-      if (deficit <= 0) break;
-      const unit = results[idx].unit;
-      if (unit <= deficit) {
-        results[idx].amount += unit;
-        deficit -= unit;
-      }
-    }
-
-    // Step 4: Any small remainder that can't be distributed in clean units
-    //         goes to the person with the highest payment
-    if (deficit !== 0 && results.length > 0) {
-      let maxIdx = 0;
-      for (let i = 1; i < results.length; i++) {
-        if (results[i].amount > results[maxIdx].amount) {
-          maxIdx = i;
-        }
-      }
-      results[maxIdx].amount += deficit;
-    }
-
-    // Clean up temp fields
-    return results.map(r => ({ name: r.name, amount: r.amount, weight: r.weight }));
-  }
-
-  // ---- Display Results ----
-  let lastResults = null;
-  let lastTotalAmount = 0;
-  let lastExcludedAmount = 0;
-
-  function displayResults(results, totalAmount, excludedAmount) {
-    lastResults = results;
-    lastTotalAmount = totalAmount;
-    lastExcludedAmount = excludedAmount;
-
+  function displayResults(r) {
     resultSection.classList.remove('hidden');
     resultList.innerHTML = '';
 
-    results.forEach(r => {
+    r.results.forEach(x => {
       const item = document.createElement('div');
       item.className = 'result-item';
-      item.innerHTML =
-        '<span class="result-name">' + escapeHtml(r.name) + '</span>' +
-        '<span class="result-amount">' + r.amount.toLocaleString() + ' 円</span>';
+
+      const name = document.createElement('span');
+      name.className = 'result-name';
+      name.textContent = x.name;
+      if (x.isOrganizer) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = '幹事';
+        name.appendChild(badge);
+      }
+
+      const amount = document.createElement('span');
+      amount.className = 'result-amount';
+      amount.textContent = x.amount.toLocaleString() + ' 円';
+
+      item.append(name, amount);
       resultList.appendChild(item);
     });
 
-    const sum = results.reduce((s, r) => s + r.amount, 0);
+    resultNote.textContent = resultNoteText(r);
+
+    const sum = r.results.reduce((s, x) => s + x.amount, 0);
     resultTotal.textContent = '合計: ' + sum.toLocaleString() + ' 円' +
-      (excludedAmount > 0 ? ' (対象外: ' + excludedAmount.toLocaleString() + ' 円)' : '') +
-      ' / 総額: ' + totalAmount.toLocaleString() + ' 円';
+      (r.excluded > 0 ? ' (対象外: ' + r.excluded.toLocaleString() + ' 円)' : '') +
+      ' / 総額: ' + r.total.toLocaleString() + ' 円';
 
-    copyBtn.textContent = navigator.share ? '📤 結果を共有（LINE・メール等）' : '📋 結果をコピー（LINE・メール用）';
-    copyBtn.classList.remove('copied');
-
-    // Scroll to results
+    copyBtn.textContent = COPY_LABEL;
     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ---- Copy ----
-  function buildShareText(results, totalAmount, excludedAmount) {
-    const sum = results.reduce((s, r) => s + r.amount, 0);
+  // ---- Share / Copy ----
+  function buildShareText(r) {
+    const sum = r.results.reduce((s, x) => s + x.amount, 0);
     const lines = ['【割り勘清算】', ''];
-    results.forEach(r => {
-      lines.push(r.name + '：' + r.amount.toLocaleString() + '円');
+    r.results.forEach(x => {
+      lines.push(x.name + (x.isOrganizer ? '（幹事）' : '') + '：' + x.amount.toLocaleString() + '円');
     });
-    lines.push('');
-    lines.push('─'.repeat(16));
-    lines.push('合計　　：' + sum.toLocaleString() + '円');
-    if (excludedAmount > 0) {
-      lines.push('対象外　：' + excludedAmount.toLocaleString() + '円');
-      lines.push('総額　　：' + totalAmount.toLocaleString() + '円');
+    lines.push('', '─'.repeat(16), '合計：' + sum.toLocaleString() + '円');
+    if (r.excluded > 0) {
+      lines.push('対象外：' + r.excluded.toLocaleString() + '円');
+      lines.push('総額：' + r.total.toLocaleString() + '円');
     }
-    lines.push('');
+    lines.push('', '※' + unitLabel(r.unit) + 'で計算' + (r.remainder > 0 ? '（端数は調整済み）' : ''));
     lines.push('※ easy-split で計算しました');
     return lines.join('\n');
   }
 
-  function copyResults() {
-    if (!lastResults) return;
-    const text = buildShareText(lastResults, lastTotalAmount, lastExcludedAmount);
-
-    const showSuccess = (label) => {
-      copyBtn.textContent = label || '✅ コピーしました！';
-      copyBtn.classList.add('copied');
-      setTimeout(() => {
-        copyBtn.textContent = navigator.share ? '📤 結果を共有（LINE・メール等）' : '📋 結果をコピー（LINE・メール用）';
-        copyBtn.classList.remove('copied');
-      }, 2500);
-    };
-
-    // Web Share API: Android/iOS ではネイティブ共有シートを開く
-    if (navigator.share) {
-      navigator.share({ title: '割り勘清算', text: text }).catch(() => {});
-      return;
-    }
-
-    // Clipboard API (HTTPS 環境)
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => showSuccess()).catch(() => execCopy(text, showSuccess));
-      return;
-    }
-
-    execCopy(text, showSuccess);
+  function flashCopyLabel(label) {
+    copyBtn.textContent = label;
+    setTimeout(() => { copyBtn.textContent = COPY_LABEL; }, 2500);
   }
 
-  function execCopy(text, onSuccess) {
+  function shareResults() {
+    if (!lastResult) return;
+    navigator.share({ title: '割り勘清算', text: buildShareText(lastResult) }).catch(() => {});
+  }
+
+  function copyResults() {
+    if (!lastResult) return;
+    const text = buildShareText(lastResult);
+    const fallback = () => flashCopyLabel(execCopy(text) ? '✅ コピーしました' : '❌ コピーできませんでした');
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => flashCopyLabel('✅ コピーしました'), fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function execCopy(text) {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.setAttribute('readonly', '');
-    // Off-screen but not hidden — required for mobile selection
     ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;outline:none;background:transparent;font-size:16px;';
     document.body.appendChild(ta);
     ta.focus();
     ta.select();
-    ta.setSelectionRange(0, ta.value.length); // mobile requires this
-    try {
-      document.execCommand('copy');
-      onSuccess();
-    } catch (_) {}
+    ta.setSelectionRange(0, ta.value.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
     document.body.removeChild(ta);
+    return ok;
   }
 
   // ---- History ----
-  function loadHistoryToggle() {
-    const isOn = localStorage.getItem(LS_HISTORY_ON);
-    historyToggle.checked = isOn === null ? true : isOn === '1';
-  }
-
-  function getHistory() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_HISTORY)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveHistory(results, totalAmount, excludedAmount) {
+  function saveHistory(r) {
     if (!historyToggle.checked) return;
-
-    const history = getHistory();
+    const history = lsJson(LS_HISTORY, []);
     history.unshift({
       date: new Date().toLocaleString('ja-JP'),
-      totalAmount,
-      excludedAmount,
-      results: results.map(r => ({ name: r.name, amount: r.amount }))
+      totalAmount: r.total,
+      excludedAmount: r.excluded,
+      results: r.results.map(x => ({ name: x.name, amount: x.amount }))
     });
-
-    // Keep max 5
-    while (history.length > 5) history.pop();
-    localStorage.setItem(LS_HISTORY, JSON.stringify(history));
+    lsSet(LS_HISTORY, JSON.stringify(history.slice(0, 5)));
     renderHistory();
   }
 
   function renderHistory() {
-    const history = getHistory();
+    const history = lsJson(LS_HISTORY, []);
     historyList.innerHTML = '';
-
-    if (history.length === 0) {
-      clearHistoryBtn.classList.add('hidden');
-      return;
-    }
-
-    clearHistoryBtn.classList.remove('hidden');
+    clearHistoryBtn.classList.toggle('hidden', history.length === 0);
 
     history.forEach(entry => {
       const item = document.createElement('div');
       item.className = 'history-item';
 
-      let html = '<div class="history-date">' + escapeHtml(entry.date) + ' — 合計: ' +
-        (entry.totalAmount || 0).toLocaleString() + '円</div>';
+      const date = document.createElement('div');
+      date.className = 'history-date';
+      date.textContent = entry.date + ' — 合計: ' + (entry.totalAmount || 0).toLocaleString() + '円';
+      item.appendChild(date);
 
-      (entry.results || []).forEach(r => {
-        html += '<div class="history-detail"><span>' + escapeHtml(r.name) +
-          '</span><span>' + (r.amount || 0).toLocaleString() + '円</span></div>';
+      (entry.results || []).forEach(x => {
+        const row = document.createElement('div');
+        row.className = 'history-detail';
+        const n = document.createElement('span');
+        n.textContent = x.name;
+        const a = document.createElement('span');
+        a.textContent = (x.amount || 0).toLocaleString() + '円';
+        row.append(n, a);
+        item.appendChild(row);
       });
 
-      item.innerHTML = html;
       historyList.appendChild(item);
     });
   }
 
   // ---- Events ----
   function bindEvents() {
-    addParticipantBtn.addEventListener('click', () => addParticipant('', 1.0));
+    totalAmountInput.addEventListener('input', () => { state.total = toInt(totalAmountInput.value); });
+    excludedAmountInput.addEventListener('input', () => { state.excluded = toInt(excludedAmountInput.value); });
+    organizerAmountInput.addEventListener('input', () => { state.organizerAmount = toInt(organizerAmountInput.value); });
+
+    organizerSelect.addEventListener('change', () => { state.organizerId = Number(organizerSelect.value); });
+
+    organizerFixedToggle.addEventListener('change', () => {
+      state.organizerFixed = organizerFixedToggle.checked;
+      organizerSettings.classList.toggle('hidden', !state.organizerFixed);
+    });
+
+    unitRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        state.unit = radio.value === 'auto' ? 'auto' : Number(radio.value);
+        updateUnitHint();
+      });
+    });
+
+    // Element-level listeners above run first, then this persists the updated state.
+    const main = document.querySelector('main');
+    main.addEventListener('input', saveDraft);
+    main.addEventListener('change', saveDraft);
+
+    addParticipantBtn.addEventListener('click', addParticipant);
     calculateBtn.addEventListener('click', calculate);
+    shareBtn.addEventListener('click', shareResults);
     copyBtn.addEventListener('click', copyResults);
 
-    organizerMode.addEventListener('change', () => {
-      organizerSettings.classList.toggle('hidden', !organizerMode.checked);
+    resetBtn.addEventListener('click', () => {
+      if (!confirm('入力内容をリセットしますか？')) return;
+      state = defaultState();
+      lastResult = null;
+      saveDraft();
+      applyStateToForm();
+      formError.classList.add('hidden');
+      resultSection.classList.add('hidden');
     });
 
     historyToggle.addEventListener('change', () => {
-      localStorage.setItem(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
+      lsSet(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
       if (!historyToggle.checked) {
-        localStorage.removeItem(LS_HISTORY);
+        lsRemove(LS_HISTORY);
         renderHistory();
       }
     });
 
     clearHistoryBtn.addEventListener('click', () => {
-      localStorage.removeItem(LS_HISTORY);
+      if (!confirm('履歴をすべて削除しますか？')) return;
+      lsRemove(LS_HISTORY);
       renderHistory();
     });
 
-    themeBtns.forEach(btn => {
-      btn.addEventListener('click', () => setTheme(btn.dataset.theme));
-    });
-
-    roundingRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        roundingHint.textContent = radio.value === 'sig2'
-          ? '上位2桁でキリよく丸めます（例: 12,344→12,000）'
-          : '1円単位で計算します';
-      });
-    });
+    themeBtns.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
   }
 
-  // ---- Utility ----
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // ---- Start ----
   document.addEventListener('DOMContentLoaded', init);
 })();
