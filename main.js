@@ -1,451 +1,856 @@
 /* ========================================
-   easy-split — Main Application Logic
+   easy-split — UI / State
    ======================================== */
 
 (function () {
   'use strict';
 
-  // ---- DOM References ----
-  const totalAmountInput = document.getElementById('totalAmount');
-  const excludedAmountInput = document.getElementById('excludedAmount');
-  const participantsList = document.getElementById('participantsList');
-  const addParticipantBtn = document.getElementById('addParticipant');
-  const organizerMode = document.getElementById('organizerMode');
-  const organizerSettings = document.getElementById('organizerSettings');
-  const organizerSelect = document.getElementById('organizerSelect');
-  const organizerAmountInput = document.getElementById('organizerAmount');
-  const calculateBtn = document.getElementById('calculateBtn');
-  const resultSection = document.getElementById('resultSection');
-  const resultList = document.getElementById('resultList');
-  const resultTotal = document.getElementById('resultTotal');
-  const qrSection = document.getElementById('qrSection');
-  const qrList = document.getElementById('qrList');
-  const historyToggle = document.getElementById('historyToggle');
-  const historyList = document.getElementById('historyList');
-  const clearHistoryBtn = document.getElementById('clearHistory');
+  const $ = id => document.getElementById(id);
+
+  const billTabs = $('billTabs');
+  const billNameRow = $('billNameRow');
+  const billNameInput = $('billName');
+  const removeBillBtn = $('removeBill');
+  const attendeeBox = $('attendeeBox');
+  const attendeeList = $('attendeeList');
+  const billHint = $('billHint');
+  const totalAmountInput = $('totalAmount');
+  const excludedAmountInput = $('excludedAmount');
+  const participantsList = $('participantsList');
+  const addParticipantBtn = $('addParticipant');
+  const addParticipantBottomBtn = $('addParticipantBottom');
+  const removeLastBtn = $('removeLast');
+  const countLabel = $('countLabel');
+  const organizerSelect = $('organizerSelect');
+  const unitRadios = document.querySelectorAll('input[name="unit"]');
+  const unitHint = $('unitHint');
+  const formError = $('formError');
+  const resultBody = $('resultBody');
+  const resultList = $('resultList');
+  const resultNote = $('resultNote');
+  const resultTotal = $('resultTotal');
+  const collectSummary = $('collectSummary');
+  const lineBtn = $('lineBtn');
+  const shareBtn = $('shareBtn');
+  const copyBtn = $('copyBtn');
+  const resetBtn = $('resetBtn');
+  const historyToggle = $('historyToggle');
+  const historyList = $('historyList');
+  const clearHistoryBtn = $('clearHistory');
   const themeBtns = document.querySelectorAll('.theme-btn');
+  const sharedNotice = $('sharedNotice');
 
-  // ---- State ----
-  let participants = [];
-  let participantIdCounter = 0;
-
-  // ---- LocalStorage Keys ----
   const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
   const LS_HISTORY_ON = 'easysplit_history_on';
   const LS_NAMES = 'easysplit_names';
-  const LS_INITIALIZED = 'easysplit_initialized';
+  const LS_DRAFT = 'easysplit_draft';
+
+  const APP_URL = 'https://yorozu-craft.com/easy-split/';
+  const COPY_LABEL = '📋 コピー';
+  const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const PRESETS = [['上司', 1.5], ['標準', 1.0], ['飲まない', 0.8], ['若手', 0.7], ['遅刻', 0.5]];
+
+  const person = (id, name) => ({ id, name, weight: 1.0, fixed: null });
+  // `absent` (rather than attendees) so newly added participants join every bill by default.
+  const newBill = (id, name, total) => ({ id, name, total, excluded: 0, absent: [] });
+
+  const defaultState = () => ({
+    bills: [newBill(0, '1次会', 6000)],
+    nextBillId: 1,
+    activeBillId: 0,
+    participants: [person(0, 'Aさん'), person(1, 'Bさん'), person(2, 'Cさん')],
+    nextId: 3,
+    organizerId: 0,
+    unit: 'auto',
+    paid: {}
+  });
+
+  let state;
+  let lastResult = null;
+
+  // ---- Storage helpers (storage can throw in private mode) ----
+  function lsGet(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+  function lsSet(key, value) {
+    try { localStorage.setItem(key, value); } catch { /* ignore */ }
+  }
+  function lsRemove(key) {
+    try { localStorage.removeItem(key); } catch { /* ignore */ }
+  }
+  function lsJson(key, fallback) {
+    try { return JSON.parse(lsGet(key)) || fallback; } catch { return fallback; }
+  }
+
+  // ---- State ----
+  function normalizeState(d) {
+    const s = Object.assign(defaultState(), d);
+    s.participants = s.participants.map(p => ({
+      id: p.id,
+      name: p.name || '',
+      weight: Number(p.weight) || 1.0,
+      fixed: Number.isInteger(p.fixed) ? p.fixed : null
+    }));
+    // Drafts saved before per-person fixed amounts existed
+    if (d.organizerFixed) {
+      const o = s.participants.find(p => p.id === s.organizerId);
+      if (o) o.fixed = d.organizerAmount || 0;
+    }
+    delete s.organizerFixed;
+    delete s.organizerAmount;
+    // Drafts / history saved before multiple bills existed
+    if (!Array.isArray(d.bills) || d.bills.length === 0) {
+      s.bills = [newBill(0, '1次会', Number.isInteger(d.total) ? d.total : 6000)];
+      s.bills[0].excluded = d.excluded || 0;
+    }
+    delete s.total;
+    delete s.excluded;
+    s.bills = s.bills.map(b => ({
+      id: b.id,
+      name: b.name || '会計',
+      total: Number.isInteger(b.total) ? b.total : 0,
+      excluded: Number.isInteger(b.excluded) ? b.excluded : 0,
+      absent: Array.isArray(b.absent) ? b.absent : []
+    }));
+    s.nextBillId = Math.max(s.nextBillId || 0, ...s.bills.map(b => b.id + 1));
+    if (!s.bills.some(b => b.id === s.activeBillId)) s.activeBillId = s.bills[0].id;
+    s.nextId = Math.max(s.nextId || 0, ...s.participants.map(p => p.id + 1));
+    if (!s.paid || typeof s.paid !== 'object') s.paid = {};
+    return s;
+  }
+
+  function loadDraft() {
+    const d = lsJson(LS_DRAFT, null);
+    if (!d || !Array.isArray(d.participants) || d.participants.length === 0) return defaultState();
+    return normalizeState(d);
+  }
+
+  function saveDraft() {
+    lsSet(LS_DRAFT, JSON.stringify(state));
+  }
+
+  function changed() {
+    recalc();
+    saveDraft();
+  }
+
+  // ---- Share link (inputs encoded in the URL hash; nothing leaves the browser) ----
+  function toBase64Url(str) {
+    let bin = '';
+    new TextEncoder().encode(str).forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function fromBase64Url(s) {
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+
+  function encodeShare() {
+    const idx = new Map(state.participants.map((p, i) => [p.id, i]));
+    return toBase64Url(JSON.stringify({
+      v: 1,
+      b: state.bills.map(b => [b.name, b.total, b.excluded, b.absent.filter(id => idx.has(id)).map(id => idx.get(id))]),
+      p: state.participants.map(p => [p.name, p.weight, p.fixed]),
+      o: idx.get(state.organizerId),
+      u: state.unit
+    }));
+  }
+
+  function decodeShare(s) {
+    const d = JSON.parse(fromBase64Url(s));
+    if (!d || d.v !== 1 || !Array.isArray(d.p) || !Array.isArray(d.b) || !d.p.length || !d.b.length) return null;
+    const weight = w => Math.min(2, Math.max(0.5, Math.round(Number(w) * 10) / 10)) || 1;
+    return normalizeState({
+      participants: d.p.slice(0, 50).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 40), weight: weight(x[1]), fixed: x[2] })),
+      bills: d.b.slice(0, 10).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 20), total: x[1], excluded: x[2], absent: Array.isArray(x[3]) ? x[3] : [] })),
+      organizerId: Number.isInteger(d.o) ? d.o : 0,
+      unit: [1, 10, 100, 500, 1000].includes(d.u) ? d.u : 'auto',
+      paid: {}
+    });
+  }
+
+  // undefined: no share link / null: broken link / object: decoded state
+  function readShareLink() {
+    const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)$/);
+    if (!m) return undefined;
+    window.history.replaceState(null, '', location.pathname + location.search);
+    try { return decodeShare(m[1]); } catch { return null; }
+  }
+
+  function showNotice(text) {
+    sharedNotice.textContent = text;
+    sharedNotice.classList.remove('hidden');
+  }
+
+  function initialState() {
+    const shared = readShareLink();
+    if (shared === null) showNotice('共有リンクを読み込めませんでした。');
+    if (!shared) return loadDraft();
+    const hasDraft = lsGet(LS_DRAFT) !== null;
+    if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は上書きされます）')) return loadDraft();
+    showNotice('共有された計算内容を表示しています');
+    return shared;
+  }
 
   // ---- Init ----
   function init() {
     loadTheme();
-    loadHistoryToggle();
+    historyToggle.checked = lsGet(LS_HISTORY_ON) !== '0';
+    shareBtn.classList.toggle('hidden', !navigator.share);
 
-    const isFirstVisit = !localStorage.getItem(LS_INITIALIZED);
-    if (isFirstVisit) {
-      // Default values for first visit
-      totalAmountInput.value = 6000;
-      addParticipant('Aさん', 1.0);
-      addParticipant('Bさん', 1.0);
-      addParticipant('Cさん', 1.0);
-      localStorage.setItem(LS_INITIALIZED, '1');
-    } else {
-      // Start with one empty participant
-      addParticipant('', 1.0);
-    }
-
+    state = initialState();
+    saveDraft();
+    applyStateToForm();
     renderHistory();
     bindEvents();
+    recalc();
+  }
+
+  function applyStateToForm() {
+    unitRadios.forEach(r => { r.checked = r.value === String(state.unit); });
+    updateUnitHint();
+    renderParticipants();
     updateOrganizerSelect();
+    renderBills();
+  }
+
+  // ---- Bills (1次会・2次会…) ----
+  const activeBill = () => state.bills.find(b => b.id === state.activeBillId);
+  const multi = () => state.bills.length > 1;
+
+  function renderBills() {
+    renderBillTabs();
+    const b = activeBill();
+    totalAmountInput.value = b.total || '';
+    excludedAmountInput.value = b.excluded || 0;
+    billNameInput.value = b.name;
+    billNameRow.classList.toggle('hidden', !multi());
+    attendeeBox.classList.toggle('hidden', !multi());
+    billHint.classList.toggle('hidden', multi());
+    renderAttendees();
+  }
+
+  function renderBillTabs() {
+    billTabs.innerHTML = '';
+    state.bills.forEach(b => {
+      const tab = document.createElement('button');
+      tab.className = 'bill-tab' + (b.id === state.activeBillId ? ' active' : '');
+      tab.setAttribute('aria-pressed', String(b.id === state.activeBillId));
+      const name = document.createElement('span');
+      name.textContent = b.name || '会計';
+      const amount = document.createElement('small');
+      amount.textContent = b.total ? yen(b.total) : '未入力';
+      tab.append(name, amount);
+      tab.addEventListener('click', () => {
+        state.activeBillId = b.id;
+        renderBills();
+        saveDraft();
+      });
+      billTabs.appendChild(tab);
+    });
+
+    const add = document.createElement('button');
+    add.className = 'bill-tab bill-add';
+    add.textContent = '＋ 会計を追加';
+    add.addEventListener('click', addBill);
+    billTabs.appendChild(add);
+  }
+
+  function renderAttendees() {
+    if (!multi()) return;
+    const b = activeBill();
+    attendeeList.innerHTML = '';
+    state.participants.forEach(p => {
+      const here = !b.absent.includes(p.id);
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (here ? ' active' : '');
+      chip.setAttribute('aria-pressed', String(here));
+      chip.textContent = (here ? '✓ ' : '') + displayName(p);
+      chip.addEventListener('click', () => {
+        b.absent = here ? b.absent.concat(p.id) : b.absent.filter(id => id !== p.id);
+        renderAttendees();
+        changed();
+      });
+      attendeeList.appendChild(chip);
+    });
+  }
+
+  function addBill() {
+    const b = newBill(state.nextBillId++, (state.bills.length + 1) + '次会', 0);
+    state.bills.push(b);
+    state.activeBillId = b.id;
+    renderBills();
+    changed();
+    totalAmountInput.focus();
+  }
+
+  function removeBill() {
+    const b = activeBill();
+    if (!multi() || !confirm('「' + b.name + '」を削除しますか？')) return;
+    state.bills = state.bills.filter(x => x.id !== b.id);
+    state.activeBillId = state.bills[0].id;
+    renderBills();
+    changed();
   }
 
   // ---- Theme ----
   function loadTheme() {
-    const saved = localStorage.getItem(LS_THEME) || 'dark';
-    setTheme(saved);
+    setTheme(lsGet(LS_THEME) || 'dark');
   }
 
   function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(LS_THEME, theme);
+    lsSet(LS_THEME, theme);
     themeBtns.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.theme === theme);
+      btn.setAttribute('aria-pressed', String(btn.dataset.theme === theme));
     });
   }
 
   // ---- Participants ----
-  function addParticipant(name, weight) {
-    const id = participantIdCounter++;
-    participants.push({ id, name: name || '', weight: weight || 1.0 });
+  function nextName() {
+    const used = new Set(state.participants.map(p => p.name));
+    for (const L of LETTERS) if (!used.has(L + 'さん')) return L + 'さん';
+    return '参加者' + (state.participants.length + 1);
+  }
+
+  function addParticipant() {
+    state.participants.push(person(state.nextId++, nextName()));
     renderParticipants();
     updateOrganizerSelect();
+    renderAttendees();
+    changed();
   }
 
   function removeParticipant(id) {
-    if (participants.length <= 1) return;
-    participants = participants.filter(p => p.id !== id);
+    if (state.participants.length <= 1) return;
+    state.participants = state.participants.filter(p => p.id !== id);
+    state.bills.forEach(b => { b.absent = b.absent.filter(x => x !== id); });
+    delete state.paid[id];
     renderParticipants();
     updateOrganizerSelect();
+    renderAttendees();
+    changed();
   }
+
+  const displayName = p => p.name.trim() || '(名前なし)';
 
   function renderParticipants() {
     participantsList.innerHTML = '';
-    const savedNames = getSavedNames();
+    countLabel.textContent = state.participants.length + '人';
+    removeLastBtn.disabled = state.participants.length <= 1;
 
-    participants.forEach((p) => {
-      const row = document.createElement('div');
-      row.className = 'participant-row';
-
-      // Name input
-      const nameInput = document.createElement('input');
-      nameInput.type = 'text';
-      nameInput.className = 'participant-name';
-      nameInput.placeholder = '名前';
-      nameInput.value = p.name;
-      nameInput.setAttribute('list', 'nameList-' + p.id);
-      nameInput.addEventListener('input', () => {
-        p.name = nameInput.value;
-        updateOrganizerSelect();
-      });
-      nameInput.addEventListener('blur', () => {
-        saveName(p.name);
-      });
-
-      // Datalist for autocomplete
-      const datalist = document.createElement('datalist');
-      datalist.id = 'nameList-' + p.id;
-      savedNames.forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = n;
-        datalist.appendChild(opt);
-      });
-
-      // Remove button
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn-remove';
-      removeBtn.textContent = '✕';
-      removeBtn.addEventListener('click', () => removeParticipant(p.id));
-
-      // Weight group
-      const weightGroup = document.createElement('div');
-      weightGroup.className = 'participant-weight-group';
-
-      const weightLabel = document.createElement('label');
-      weightLabel.textContent = '係数';
-
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.className = 'weight-slider';
-      slider.min = '0.5';
-      slider.max = '2.0';
-      slider.step = '0.1';
-      slider.value = p.weight;
-
-      const weightValue = document.createElement('span');
-      weightValue.className = 'weight-value';
-      weightValue.textContent = Number(p.weight).toFixed(1);
-
-      slider.addEventListener('input', () => {
-        p.weight = parseFloat(slider.value);
-        weightValue.textContent = p.weight.toFixed(1);
-      });
-
-      weightGroup.appendChild(weightLabel);
-      weightGroup.appendChild(slider);
-      weightGroup.appendChild(weightValue);
-
-      row.appendChild(nameInput);
-      row.appendChild(datalist);
-      row.appendChild(removeBtn);
-      row.appendChild(weightGroup);
-
-      participantsList.appendChild(row);
+    const datalist = document.createElement('datalist');
+    datalist.id = 'savedNames';
+    lsJson(LS_NAMES, []).forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      datalist.appendChild(opt);
     });
+    participantsList.appendChild(datalist);
+
+    state.participants.forEach((p, i) => participantsList.appendChild(participantRow(p, i)));
+  }
+
+  function participantRow(p, i) {
+    const label = p.name || (i + 1) + '人目';
+    const row = document.createElement('div');
+    row.className = 'participant-row';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'participant-name';
+    nameInput.placeholder = '名前';
+    nameInput.value = p.name;
+    nameInput.setAttribute('list', 'savedNames');
+    nameInput.setAttribute('aria-label', (i + 1) + '人目の名前');
+    nameInput.addEventListener('input', () => {
+      p.name = nameInput.value;
+      updateOrganizerSelect();
+      renderAttendees();
+    });
+    nameInput.addEventListener('blur', () => saveName(p.name));
+
+    const isFixed = p.fixed !== null;
+    const fixedBtn = document.createElement('button');
+    fixedBtn.className = 'btn-fixed' + (isFixed ? ' active' : '');
+    fixedBtn.textContent = '固定';
+    fixedBtn.setAttribute('aria-pressed', String(isFixed));
+    fixedBtn.setAttribute('aria-label', label + 'の金額を固定');
+    fixedBtn.addEventListener('click', () => {
+      p.fixed = p.fixed === null ? 0 : null;
+      renderParticipants();
+      changed();
+      const input = $('fixed-' + p.id);
+      if (input) input.focus();
+    });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.setAttribute('aria-label', label + 'を削除');
+    removeBtn.addEventListener('click', () => removeParticipant(p.id));
+
+    row.append(nameInput, fixedBtn, removeBtn);
+    if (isFixed) row.appendChild(fixedGroup(p));
+    else row.append(...weightControls(p));
+    return row;
+  }
+
+  function fixedGroup(p) {
+    const group = document.createElement('div');
+    group.className = 'amount-input-group sub fixed-group';
+
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'fixed-' + p.id;
+    lbl.textContent = '固定額';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'fixed-' + p.id;
+    input.inputMode = 'numeric';
+    input.min = '0';
+    input.step = '100';
+    input.value = p.fixed;
+    input.addEventListener('input', () => { p.fixed = toInt(input.value); });
+
+    const cur = document.createElement('span');
+    cur.className = 'currency';
+    cur.textContent = '円';
+
+    group.append(lbl, input, cur);
+    return group;
+  }
+
+  function weightControls(p) {
+    const weightGroup = document.createElement('div');
+    weightGroup.className = 'participant-weight-group';
+
+    const sliderId = 'weight-' + p.id;
+    const weightLabel = document.createElement('label');
+    weightLabel.textContent = '係数';
+    weightLabel.htmlFor = sliderId;
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.id = sliderId;
+    slider.className = 'weight-slider';
+    slider.min = '0.5';
+    slider.max = '2.0';
+    slider.step = '0.1';
+    slider.value = p.weight;
+
+    const weightValue = document.createElement('span');
+    weightValue.className = 'weight-value';
+
+    const presetRow = document.createElement('div');
+    presetRow.className = 'preset-row';
+
+    const sync = () => {
+      weightValue.textContent = p.weight.toFixed(1);
+      presetRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', Number(c.dataset.w) === p.weight));
+    };
+
+    PRESETS.forEach(([name, w]) => {
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.dataset.w = w;
+      chip.textContent = name + ' ' + w.toFixed(1);
+      chip.addEventListener('click', () => {
+        p.weight = w;
+        slider.value = w;
+        sync();
+        changed();
+      });
+      presetRow.appendChild(chip);
+    });
+
+    slider.addEventListener('input', () => {
+      p.weight = parseFloat(slider.value);
+      sync();
+    });
+
+    sync();
+    weightGroup.append(weightLabel, slider, weightValue);
+    return [weightGroup, presetRow];
   }
 
   function updateOrganizerSelect() {
-    const currentValue = organizerSelect.value;
+    if (!state.participants.some(p => p.id === state.organizerId)) {
+      state.organizerId = state.participants[0].id;
+    }
     organizerSelect.innerHTML = '';
-    participants.forEach((p) => {
+    state.participants.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.name || '(名前なし)';
+      opt.textContent = displayName(p);
       organizerSelect.appendChild(opt);
     });
-    // Restore selection if still valid
-    if ([...organizerSelect.options].some(o => o.value === currentValue)) {
-      organizerSelect.value = currentValue;
-    }
-  }
-
-  // ---- Name Autocomplete ----
-  function getSavedNames() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_NAMES)) || [];
-    } catch {
-      return [];
-    }
+    organizerSelect.value = String(state.organizerId);
   }
 
   function saveName(name) {
-    if (!name || !name.trim()) return;
-    const names = getSavedNames();
-    const trimmed = name.trim();
-    if (!names.includes(trimmed)) {
-      names.push(trimmed);
-      if (names.length > 50) names.shift();
-      localStorage.setItem(LS_NAMES, JSON.stringify(names));
-    }
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
+    const names = lsJson(LS_NAMES, []);
+    if (names.includes(trimmed)) return;
+    names.push(trimmed);
+    if (names.length > 50) names.shift();
+    lsSet(LS_NAMES, JSON.stringify(names));
   }
 
-  // ---- Calculation ----
-  function calculate() {
-    const totalAmount = parseInt(totalAmountInput.value) || 0;
-    const excludedAmount = parseInt(excludedAmountInput.value) || 0;
-    const splittableAmount = totalAmount - excludedAmount;
+  // ---- Unit ----
+  function updateUnitHint() {
+    unitHint.textContent = state.unit === 'auto'
+      ? '1人あたりの金額に合わせて自動で選びます（約3,000円なら100円単位）'
+      : state.unit.toLocaleString() + '円単位で集金します';
+  }
 
-    if (splittableAmount <= 0 || participants.length === 0) {
-      alert('合計金額と参加者を確認してください。');
+  // ---- Calculation (runs on every change) ----
+  function toInt(value) {
+    const n = parseInt(value, 10);
+    return Number.isNaN(n) ? 0 : n;
+  }
+
+  function recalc() {
+    const res = EasySplit.computeMulti({
+      bills: state.bills.map(b => ({
+        id: b.id,
+        name: b.name.trim() || '会計',
+        total: b.total,
+        excluded: b.excluded,
+        attendees: state.participants.filter(p => !b.absent.includes(p.id)).map(p => p.id)
+      })),
+      people: state.participants.map(p => ({ id: p.id, name: displayName(p), weight: p.weight, fixed: p.fixed })),
+      organizerId: state.organizerId,
+      unit: state.unit
+    });
+
+    formError.classList.toggle('hidden', !res.error);
+    resultBody.classList.toggle('hidden', !!res.error);
+    if (res.error) {
+      formError.textContent = res.error;
+      lastResult = null;
       return;
     }
 
-    // Filter out participants with no name
-    const validParticipants = participants.map(p => ({
-      ...p,
-      name: p.name.trim() || '(名前なし)'
-    }));
-
-    let results;
-
-    if (organizerMode.checked) {
-      const organizerId = parseInt(organizerSelect.value);
-      const organizerAmount = parseInt(organizerAmountInput.value) || 0;
-      results = calculateWithOrganizer(validParticipants, splittableAmount, organizerId, organizerAmount);
-    } else {
-      results = calculateNormal(validParticipants, splittableAmount);
-    }
-
-    displayResults(results, totalAmount, excludedAmount);
-    generateQRCodes(results);
-    saveHistory(results, totalAmount, excludedAmount);
+    lastResult = Object.assign({
+      total: res.bills.reduce((s, b) => s + b.total, 0),
+      excluded: res.bills.reduce((s, b) => s + b.excluded, 0)
+    }, res);
+    renderResults(lastResult);
   }
 
-  function calculateNormal(people, amount) {
-    const totalWeight = people.reduce((sum, p) => sum + p.weight, 0);
-    const rawResults = people.map(p => ({
-      name: p.name,
-      raw: (amount * p.weight) / totalWeight,
-      weight: p.weight
-    }));
+  const yen = n => n.toLocaleString() + '円';
+  const unitLabel = unit => (unit === 1 ? '1円単位' : yen(unit) + '単位');
 
-    return adjustRounding(rawResults, amount);
+  function absorberText(r) {
+    const a = r.results.find(x => x.id === r.absorberId);
+    return a.isOrganizer ? '幹事' : a.name;
   }
 
-  function calculateWithOrganizer(people, amount, organizerId, organizerAmount) {
-    const organizer = people.find(p => p.id === organizerId);
-    const others = people.filter(p => p.id !== organizerId);
-
-    if (!organizer || others.length === 0) {
-      return calculateNormal(people, amount);
-    }
-
-    const remainingAmount = amount - organizerAmount;
-    const totalOtherWeight = others.reduce((sum, p) => sum + p.weight, 0);
-
-    const rawResults = others.map(p => ({
-      name: p.name,
-      raw: (remainingAmount * p.weight) / totalOtherWeight,
-      weight: p.weight
-    }));
-
-    const adjustedOthers = adjustRounding(rawResults, remainingAmount);
-
-    // Insert organizer
-    const result = [
-      { name: organizer.name + ' (幹事)', amount: organizerAmount, weight: organizer.weight },
-      ...adjustedOthers
-    ];
-
-    return result;
-  }
-
-  function adjustRounding(rawResults, targetTotal) {
-    // Round all amounts
-    const results = rawResults.map(r => ({
-      name: r.name,
-      amount: Math.round(r.raw),
-      weight: r.weight
-    }));
-
-    // Calculate difference due to rounding
-    const currentTotal = results.reduce((sum, r) => sum + r.amount, 0);
-    let diff = targetTotal - currentTotal;
-
-    // Adjust the person with the highest payment
-    if (diff !== 0 && results.length > 0) {
-      // Find index of person with highest amount
-      let maxIdx = 0;
-      for (let i = 1; i < results.length; i++) {
-        if (results[i].amount > results[maxIdx].amount) {
-          maxIdx = i;
-        }
-      }
-      results[maxIdx].amount += diff;
-    }
-
-    return results;
-  }
-
-  // ---- Display Results ----
-  function displayResults(results, totalAmount, excludedAmount) {
-    resultSection.classList.remove('hidden');
+  function renderResults(r) {
     resultList.innerHTML = '';
 
-    results.forEach(r => {
-      const item = document.createElement('div');
-      item.className = 'result-item';
-      item.innerHTML =
-        '<span class="result-name">' + escapeHtml(r.name) + '</span>' +
-        '<span class="result-amount">' + r.amount.toLocaleString() + ' 円</span>';
+    r.results.forEach(x => {
+      // The organizer collects the money, so only the others get a check mark.
+      const collectable = !x.isOrganizer;
+      const paid = collectable && !!state.paid[x.id];
+      const item = document.createElement(collectable ? 'button' : 'div');
+      item.className = 'result-item' + (paid ? ' paid' : '');
+
+      const check = document.createElement('span');
+      check.className = 'check' + (collectable ? '' : ' none');
+      check.textContent = paid ? '✓' : '';
+
+      const name = document.createElement('span');
+      name.className = 'result-name';
+      name.textContent = x.name;
+      if (x.isOrganizer) name.appendChild(badge('幹事'));
+      if (x.isFixed) name.appendChild(badge('固定', 'badge-muted'));
+      if (r.bills.length > 1) {
+        const sub = document.createElement('small');
+        sub.className = 'result-sub';
+        sub.textContent = attendedLabel(r, x);
+        name.appendChild(sub);
+      }
+
+      const amount = document.createElement('span');
+      amount.className = 'result-amount';
+      amount.textContent = x.amount.toLocaleString() + ' 円';
+
+      item.append(check, name, amount);
+
+      if (collectable) {
+        item.setAttribute('aria-pressed', String(paid));
+        item.setAttribute('aria-label', x.name + ' ' + yen(x.amount) + (paid ? ' 集金済み' : ' 未集金'));
+        item.addEventListener('click', () => {
+          if (state.paid[x.id]) delete state.paid[x.id];
+          else state.paid[x.id] = true;
+          saveDraft();
+          renderResults(lastResult);
+        });
+      }
       resultList.appendChild(item);
     });
 
-    const sum = results.reduce((s, r) => s + r.amount, 0);
-    resultTotal.textContent = '合計: ' + sum.toLocaleString() + ' 円' +
-      (excludedAmount > 0 ? ' (対象外: ' + excludedAmount.toLocaleString() + ' 円)' : '') +
-      ' / 総額: ' + totalAmount.toLocaleString() + ' 円';
-
-    // Scroll to results
-    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  // ---- QR Codes ----
-  function generateQRCodes(results) {
-    qrSection.classList.remove('hidden');
-    qrList.innerHTML = '';
-
-    if (typeof QRCode === 'undefined') {
-      qrList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.85rem;">QRコードライブラリを読み込めませんでした。</p>';
-      return;
+    if (r.absorberId === null) {
+      resultNote.textContent = '全員の金額が固定されています。';
+    } else {
+      resultNote.textContent = unitLabel(r.unit) + 'で計算しました。' +
+        (r.remainder > 0 ? '端数 ' + yen(r.remainder) + ' は ' + absorberText(r) + ' が負担します。' : '');
     }
 
-    results.forEach(r => {
-      const item = document.createElement('div');
-      item.className = 'qr-item';
+    const sum = r.results.reduce((s, x) => s + x.amount, 0);
+    resultTotal.textContent = '合計: ' + sum.toLocaleString() + ' 円' +
+      (r.excluded > 0 ? ' (対象外: ' + r.excluded.toLocaleString() + ' 円)' : '') +
+      ' / 総額: ' + r.total.toLocaleString() + ' 円';
 
-      const label = document.createElement('div');
-      label.className = 'qr-label';
-      label.textContent = r.name + ': ' + r.amount.toLocaleString() + '円';
+    renderCollectSummary(r);
+  }
 
-      const qrDiv = document.createElement('div');
-      item.appendChild(label);
-      item.appendChild(qrDiv);
-      qrList.appendChild(item);
+  function attendedLabel(r, x) {
+    const names = r.bills.filter(b => x.bills.includes(b.id)).map(b => b.name);
+    return names.length ? names.join('・') : '不参加';
+  }
 
-      new QRCode(qrDiv, {
-        text: r.name + ' ' + r.amount + '円',
-        width: 120,
-        height: 120,
-        colorDark: '#000000',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+  function badge(text, extra) {
+    const b = document.createElement('span');
+    b.className = 'badge' + (extra ? ' ' + extra : '');
+    b.textContent = text;
+    return b;
+  }
+
+  function renderCollectSummary(r) {
+    const payers = r.results.filter(x => !x.isOrganizer);
+    const paidCount = payers.filter(x => state.paid[x.id]).length;
+    const unpaid = payers.filter(x => !state.paid[x.id]).reduce((s, x) => s + x.amount, 0);
+
+    collectSummary.classList.toggle('done', payers.length > 0 && paidCount === payers.length);
+    if (payers.length === 0) collectSummary.textContent = '';
+    else if (paidCount === payers.length) collectSummary.textContent = '✅ 全員の集金が完了しました';
+    else if (paidCount === 0) collectSummary.textContent = '名前をタップすると集金済みにできます（未集金 ' + yen(unpaid) + '）';
+    else collectSummary.textContent = '集金済み ' + paidCount + '/' + payers.length + '人 ・ 未集金 ' + yen(unpaid);
+  }
+
+  // ---- Share / Copy / LINE ----
+  function appUrl() {
+    return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : APP_URL;
+  }
+
+  function buildShareText(r) {
+    const sum = r.results.reduce((s, x) => s + x.amount, 0);
+    const lines = ['【割り勘清算】', ''];
+    if (r.bills.length > 1) {
+      r.bills.forEach(b => {
+        const who = b.attendees.length === r.results.length
+          ? '全員'
+          : r.results.filter(x => b.attendees.includes(x.id)).map(x => x.name).join('・');
+        lines.push('■ ' + b.name + ' ' + yen(b.total) + '（' + who + '）');
       });
+      lines.push('');
+    }
+    r.results.forEach(x => {
+      lines.push(x.name + (x.isOrganizer ? '（幹事）' : '') + '：' + yen(x.amount));
     });
+    lines.push('', '─'.repeat(16), '合計：' + yen(sum));
+    if (r.excluded > 0) {
+      lines.push('対象外：' + yen(r.excluded));
+      lines.push('総額：' + yen(r.total));
+    }
+    if (r.absorberId !== null) {
+      lines.push('', '※' + unitLabel(r.unit) + 'で計算' + (r.remainder > 0 ? '（端数は' + absorberText(r) + 'が調整）' : ''));
+    }
+    lines.push('', '▼ タップで同じ計算を開けます（easy-split）', appUrl() + '#s=' + encodeShare());
+    return lines.join('\n');
+  }
+
+  // Sending or copying marks the result as final, so it is recorded in history.
+  function withShareText(fn) {
+    return () => {
+      if (!lastResult) return;
+      saveHistory(lastResult);
+      fn(buildShareText(lastResult));
+    };
+  }
+
+  function sendLine(text) {
+    window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  }
+
+  function shareNative(text) {
+    navigator.share({ title: '割り勘清算', text }).catch(() => {});
+  }
+
+  function flashCopyLabel(label) {
+    copyBtn.textContent = label;
+    setTimeout(() => { copyBtn.textContent = COPY_LABEL; }, 2500);
+  }
+
+  function copyText(text) {
+    const fallback = () => flashCopyLabel(execCopy(text) ? '✅ コピーしました' : '❌ コピーできませんでした');
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => flashCopyLabel('✅ コピーしました'), fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function execCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:none;outline:none;background:transparent;font-size:16px;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
   }
 
   // ---- History ----
-  function loadHistoryToggle() {
-    const isOn = localStorage.getItem(LS_HISTORY_ON);
-    historyToggle.checked = isOn === null ? true : isOn === '1';
+  function snapshotInput() {
+    return {
+      bills: state.bills.map(b => Object.assign({}, b, { absent: b.absent.slice() })),
+      participants: state.participants.map(p => Object.assign({}, p)),
+      organizerId: state.organizerId,
+      unit: state.unit
+    };
   }
 
-  function getHistory() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_HISTORY)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveHistory(results, totalAmount, excludedAmount) {
+  function saveHistory(r) {
     if (!historyToggle.checked) return;
-
-    const history = getHistory();
+    const history = lsJson(LS_HISTORY, []);
+    const input = snapshotInput();
+    if (history[0] && JSON.stringify(history[0].input) === JSON.stringify(input)) return;
     history.unshift({
       date: new Date().toLocaleString('ja-JP'),
-      totalAmount,
-      excludedAmount,
-      results: results.map(r => ({ name: r.name, amount: r.amount }))
+      totalAmount: r.total,
+      excludedAmount: r.excluded,
+      results: r.results.map(x => ({ name: x.name, amount: x.amount })),
+      input
     });
-
-    // Keep max 5
-    while (history.length > 5) history.pop();
-    localStorage.setItem(LS_HISTORY, JSON.stringify(history));
+    lsSet(LS_HISTORY, JSON.stringify(history.slice(0, 5)));
     renderHistory();
   }
 
+  function restoreHistory(entry) {
+    if (!confirm('この内容を入力に復元しますか？（今の入力は上書きされます）')) return;
+    state = normalizeState(Object.assign({}, entry.input, { paid: {} }));
+    applyStateToForm();
+    changed();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function renderHistory() {
-    const history = getHistory();
+    const history = lsJson(LS_HISTORY, []);
     historyList.innerHTML = '';
-
-    if (history.length === 0) {
-      clearHistoryBtn.classList.add('hidden');
-      return;
-    }
-
-    clearHistoryBtn.classList.remove('hidden');
+    clearHistoryBtn.classList.toggle('hidden', history.length === 0);
 
     history.forEach(entry => {
       const item = document.createElement('div');
       item.className = 'history-item';
 
-      let html = '<div class="history-date">' + escapeHtml(entry.date) + ' — 合計: ' +
-        (entry.totalAmount || 0).toLocaleString() + '円</div>';
+      const date = document.createElement('div');
+      date.className = 'history-date';
+      date.textContent = entry.date + ' — 合計: ' + (entry.totalAmount || 0).toLocaleString() + '円';
+      item.appendChild(date);
 
-      (entry.results || []).forEach(r => {
-        html += '<div class="history-detail"><span>' + escapeHtml(r.name) +
-          '</span><span>' + (r.amount || 0).toLocaleString() + '円</span></div>';
+      (entry.results || []).forEach(x => {
+        const row = document.createElement('div');
+        row.className = 'history-detail';
+        const n = document.createElement('span');
+        n.textContent = x.name;
+        const a = document.createElement('span');
+        a.textContent = (x.amount || 0).toLocaleString() + '円';
+        row.append(n, a);
+        item.appendChild(row);
       });
 
-      item.innerHTML = html;
+      if (entry.input && Array.isArray(entry.input.participants)) {
+        const restore = document.createElement('button');
+        restore.className = 'btn-restore';
+        restore.textContent = '↩ この内容を復元';
+        restore.addEventListener('click', () => restoreHistory(entry));
+        item.appendChild(restore);
+      }
+
       historyList.appendChild(item);
     });
   }
 
   // ---- Events ----
   function bindEvents() {
-    addParticipantBtn.addEventListener('click', () => addParticipant('', 1.0));
-    calculateBtn.addEventListener('click', calculate);
+    totalAmountInput.addEventListener('input', () => {
+      activeBill().total = toInt(totalAmountInput.value);
+      renderBillTabs();
+    });
+    excludedAmountInput.addEventListener('input', () => { activeBill().excluded = toInt(excludedAmountInput.value); });
+    billNameInput.addEventListener('input', () => {
+      activeBill().name = billNameInput.value;
+      renderBillTabs();
+    });
+    removeBillBtn.addEventListener('click', removeBill);
+    organizerSelect.addEventListener('change', () => { state.organizerId = Number(organizerSelect.value); });
 
-    organizerMode.addEventListener('change', () => {
-      organizerSettings.classList.toggle('hidden', !organizerMode.checked);
+    unitRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        state.unit = radio.value === 'auto' ? 'auto' : Number(radio.value);
+        updateUnitHint();
+      });
+    });
+
+    // Element-level listeners above update state first; this recalculates and persists.
+    const inputs = document.querySelectorAll('#totalAmount, #excludedAmount, #billName, #participantsList, #organizerSelect, input[name="unit"]');
+    inputs.forEach(el => {
+      el.addEventListener('input', changed);
+      el.addEventListener('change', changed);
+    });
+
+    addParticipantBtn.addEventListener('click', addParticipant);
+    addParticipantBottomBtn.addEventListener('click', addParticipant);
+    removeLastBtn.addEventListener('click', () => {
+      removeParticipant(state.participants[state.participants.length - 1].id);
+    });
+
+    lineBtn.addEventListener('click', withShareText(sendLine));
+    shareBtn.addEventListener('click', withShareText(shareNative));
+    copyBtn.addEventListener('click', withShareText(copyText));
+
+    resetBtn.addEventListener('click', () => {
+      if (!confirm('入力内容をリセットしますか？')) return;
+      state = defaultState();
+      applyStateToForm();
+      changed();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     historyToggle.addEventListener('change', () => {
-      localStorage.setItem(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
+      lsSet(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
       if (!historyToggle.checked) {
-        localStorage.removeItem(LS_HISTORY);
+        lsRemove(LS_HISTORY);
         renderHistory();
       }
     });
 
     clearHistoryBtn.addEventListener('click', () => {
-      localStorage.removeItem(LS_HISTORY);
+      if (!confirm('履歴をすべて削除しますか？')) return;
+      lsRemove(LS_HISTORY);
       renderHistory();
     });
 
-    themeBtns.forEach(btn => {
-      btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    themeBtns.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
+
+    // A share link opened in a tab that already shows the app only changes the hash.
+    window.addEventListener('hashchange', () => {
+      if (/^#s=/.test(location.hash)) location.reload();
     });
   }
 
-  // ---- Utility ----
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  // ---- Start ----
   document.addEventListener('DOMContentLoaded', init);
 })();
