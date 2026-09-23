@@ -3,21 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>easy-split | Simple &amp; Fair Bill Splitter</title>
-  <meta name="description" content="A simple and fair bill-splitting tool with weighted calculation for group events.">
-  <meta name="keywords" content="bill split, drinking party, group payment, weighted split,幹事,割り勘,清算">
+  <title>easy-split｜傾斜割り勘・飲み会の清算アプリ（幹事0円・2次会合算）</title>
+  <meta name="description" content="飲み会の割り勘を傾斜つきで計算できる無料アプリ。上司・若手の係数、幹事の持ち出しゼロ、1次会・2次会の合算、100円単位のキリのいい集金に対応。結果はそのままLINEで送れます。登録不要。">
+  <meta name="keywords" content="割り勘,傾斜,飲み会,幹事,清算,計算,2次会,bill split,weighted split">
+  <link rel="canonical" href="https://youheioonuki.github.io/easy-split/">
+  <meta name="theme-color" content="#1a1a2e">
 
   <!-- OGP -->
-  <meta property="og:title" content="easy-split | Simple &amp; Fair Bill Splitter">
-  <meta property="og:description" content="A simple and fair bill-splitting tool with weighted calculation for group events.">
+  <meta property="og:title" content="easy-split｜傾斜割り勘・飲み会の清算アプリ">
+  <meta property="og:description" content="上司・若手の係数、幹事0円、2次会の合算、100円単位の集金に対応。結果はそのままLINEで送れます。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://youheioonuki.github.io/easy-split/">
-  <meta property="og:image" content="https://youheioonuki.github.io/easy-split/icon.png">
+  <meta property="og:image" content="https://youheioonuki.github.io/easy-split/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="easy-split">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
 
-  <!-- Favicon -->
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <!-- Favicon / PWA -->
+  <link rel="icon" href="favicon.ico" sizes="32x32">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
 
   <!-- JSON-LD -->
   <script type="application/ld+json">
@@ -25,11 +33,20 @@
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "easy-split",
-    "description": "A simple and fair bill-splitting tool with weighted calculation for group events.",
+    "description": "飲み会の割り勘を傾斜つきで計算できる無料アプリ。上司・若手の係数、幹事の持ち出しゼロ、1次会・2次会の合算、100円単位の集金に対応。",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "All",
-    "url": "https://youheioonuki.github.io/easy-split/"
+    "inLanguage": "ja",
+    "url": "https://youheioonuki.github.io/easy-split/",
+    "image": "https://youheioonuki.github.io/easy-split/og-image.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+    "author": { "@type": "Person", "name": "Youhei" }
   }
+  </script>
+
+  <!-- Apply the saved theme before first paint to avoid a flash -->
+  <script>
+    try { var t = localStorage.getItem('easysplit_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
   </script>
 
   <!-- Google AdSense -->
@@ -42,13 +59,15 @@
   <!-- Header -->
   <header class="app-header">
     <h1 class="app-title">easy-split</h1>
-    <p class="app-subtitle">割り勘・傾斜清算アプリ</p>
-    <div class="theme-switcher">
-      <button class="theme-btn" data-theme="dark" title="Dark">🌙</button>
-      <button class="theme-btn" data-theme="simple" title="Simple">☀️</button>
-      <button class="theme-btn" data-theme="metal" title="Metal">⚙️</button>
+    <p class="app-subtitle">傾斜割り勘・飲み会の清算アプリ</p>
+    <div class="theme-switcher" role="group" aria-label="テーマ">
+      <button class="theme-btn" data-theme="dark" title="Dark" aria-label="ダークテーマ">🌙</button>
+      <button class="theme-btn" data-theme="simple" title="Simple" aria-label="シンプルテーマ">☀️</button>
+      <button class="theme-btn" data-theme="metal" title="Metal" aria-label="メタルテーマ">⚙️</button>
     </div>
   </header>
+
+  <p id="sharedNotice" class="shared-notice hidden" role="status"></p>
 
   <main class="container">
     <!-- 会計（1次会・2次会…） -->
@@ -147,6 +166,55 @@
       <div id="historyList"></div>
       <button id="clearHistory" class="btn btn-secondary hidden">履歴をクリア</button>
     </section>
+
+    <!-- 解説 -->
+    <article class="card content">
+      <h2>easy-split の使い方</h2>
+      <ol>
+        <li><strong>合計金額を入力</strong>：お店の会計額を入れます。飲み放題の対象外になる持ち込み代など、割り勘にしない分は「割り勘対象外」へ。</li>
+        <li><strong>人数を合わせる</strong>：＋／−で人数を増減します。名前は Aさん・Bさん… と自動で入るので、そのままでも使えます。</li>
+        <li><strong>傾斜をつける</strong>：上司は「上司 1.5」、お酒を飲まない人は「飲まない 0.8」など、プリセットをタップするだけで係数を設定できます。</li>
+        <li><strong>金額が決まっている人は固定</strong>：途中参加で「3,000円だけ」の人や、幹事の持ち出しをゼロにしたいときは「固定」で金額を指定します。</li>
+        <li><strong>LINEで送る</strong>：結果は入力と同時に表示されます。「LINEで送る」でグループにそのまま共有し、支払いを受けたら名前をタップして集金済みにしましょう。</li>
+      </ol>
+
+      <h3>傾斜割り勘（係数割り）とは</h3>
+      <p>
+        参加者ごとに「係数」を決め、係数の比率で合計金額を分ける方法です。
+        たとえば 16,000円 を 上司 1.5・同僚 1.0・同僚 1.0・遅れて来た人 0.5 で分けると、
+        係数の合計 4.0 に対して 6,000円・4,000円・4,000円・2,000円 になります。
+        役職や年次、飲んだ量、参加時間の差を、角を立てずに金額へ反映できます。
+        係数の決め方は <a href="guide-keisha.html">傾斜割り勘の係数の決め方</a> で詳しく紹介しています。
+      </p>
+
+      <h3>端数はどう処理される？</h3>
+      <p>
+        1人あたりの金額を「集金単位」（自動・1円・10円・100円・500円・1000円）でそろえ、
+        割り切れずに残った端数は幹事が負担する仕組みです。
+        幹事はお店に全額を支払い、他の人から集金する立場なので、幹事以外の人はキリのいい金額を払うだけで済みます。
+        それでも合計金額は必ずお会計と一致します。
+        考え方は <a href="guide-hasuu.html">割り勘の端数処理のルール</a> にまとめています。
+      </p>
+
+      <h3>2次会・3次会があるとき</h3>
+      <p>
+        「＋ 会計を追加」で会計を増やし、それぞれの会計に参加した人を選びます。
+        1次会だけ参加した人は 1次会の分だけ、最後まで参加した人は全部の合計が請求されます。
+        LINE に送る文面にも、会計ごとの金額と参加者が入ります。
+      </p>
+
+      <h3>よくある質問</h3>
+      <dl class="faq">
+        <dt>入力した名前や金額はどこかに送信されますか？</dt>
+        <dd>いいえ。入力内容はお使いのブラウザ（localStorage）にだけ保存され、サーバーには送信されません。詳しくは <a href="privacy.html">プライバシーポリシー</a> をご覧ください。</dd>
+        <dt>料金はかかりますか？</dt>
+        <dd>無料です。会員登録やアプリのインストールも不要です。</dd>
+        <dt>電波の悪いお店でも使えますか？</dt>
+        <dd>一度開いたことがあれば、オフラインでも動作します。ブラウザのメニューから「ホーム画面に追加」しておくと、アプリのように起動できます。</dd>
+        <dt>計算結果を他の人にも見てもらえますか？</dt>
+        <dd>「LINEで送る」「コピー」で送る文面にリンクが入っていて、受け取った人がタップすると同じ計算内容を開けます。</dd>
+      </dl>
+    </article>
   </main>
 
   <!-- AdSense -->
@@ -157,6 +225,10 @@
   <!-- Footer -->
   <footer class="app-footer">
     <nav class="footer-nav">
+      <a href="guide-keisha.html">係数の決め方</a>
+      <a href="guide-hasuu.html">端数処理のルール</a>
+    </nav>
+    <nav class="footer-nav">
       <a href="about.html">About</a>
       <a href="terms.html">利用規約</a>
       <a href="privacy.html">プライバシーポリシー</a>
@@ -166,5 +238,10 @@
 
   <script src="split.js"></script>
   <script src="main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js'); });
+    }
+  </script>
 </body>
 </html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>割り勘の端数処理のルール｜幹事が困らない集金のしかた | easy-split</title>
+  <meta name="description" content="割り勘で出る端数（1円・10円単位の半端な金額）の処理方法を解説。よくある4つのやり方と、100円単位でキリよく集金しながら合計をぴったり合わせる方法を紹介します。">
+  <link rel="canonical" href="https://youheioonuki.github.io/easy-split/guide-hasuu.html">
+  <meta property="og:title" content="割り勘の端数処理のルール | easy-split">
+  <meta property="og:description" content="割り勘の端数のよくある処理方法と、100円単位でキリよく集金しながら合計を合わせる方法。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://youheioonuki.github.io/easy-split/guide-hasuu.html">
+  <meta property="og:image" content="https://youheioonuki.github.io/easy-split/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script>
+    try { var t = localStorage.getItem('easysplit_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375267956079717"
+       crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <p class="app-title"><a href="index.html" style="color:inherit;text-decoration:none;">easy-split</a></p>
+    <p class="app-subtitle">ガイド</p>
+  </header>
+
+  <main class="container">
+    <article class="card content">
+      <h1 class="guide-title">割り勘の端数処理のルール</h1>
+      <p>
+        10,000円 を 3人 で割ると 1人 3,333.33…円。
+        割り勘ではこうした<strong>端数</strong>がよく出ますが、
+        1円単位で集金するのは手間ですし、小銭の受け渡しも面倒です。
+        このページでは、端数のよくある処理方法と、easy-split の考え方を紹介します。
+      </p>
+
+      <h3>よくある4つの処理方法</h3>
+      <ol>
+        <li><strong>幹事が負担する</strong>：全員が 3,300円 を払い、足りない 100円 は幹事が出す。幹事の手間を考えると不公平に感じる人もいます。</li>
+        <li><strong>多く払える人に寄せる</strong>：上司や多めに飲んだ人の金額に端数を上乗せする。傾斜割り勘と相性のよい方法です。</li>
+        <li><strong>切り上げて、余りを次回に回す</strong>：全員 3,400円 にして、余った 200円 を次回の会費にあてる。定期的に集まるグループ向きです。</li>
+        <li><strong>1円単位できっちり払う</strong>：キャッシュレス送金なら、1円単位でも手間はそれほどかかりません。</li>
+      </ol>
+
+      <h3>easy-split の端数処理</h3>
+      <p>
+        easy-split は、<strong>幹事以外の人はキリのいい金額を払い、合計はお会計とぴったり一致する</strong>ように計算します。
+      </p>
+      <ol>
+        <li>「集金単位」（100円など）ごとに、係数の比率で金額を割り振る</li>
+        <li>割り振りで出た小数点以下は、切り捨てた分が大きい人から順に1単位ずつ加える（最大剰余法）</li>
+        <li>それでも単位に満たない端数は、<strong>幹事の支払い額に含める</strong></li>
+      </ol>
+      <p>
+        幹事はお店に全額を立て替えて、他の人から集金する立場です。
+        端数が幹事の支払い額に入っていれば、幹事が実際に受け取るお金はすべてキリのいい金額になり、小銭のやりとりがなくなります。
+      </p>
+
+      <h3>計算例：7,777円 を 3人 で 100円単位</h3>
+      <table>
+        <thead><tr><th>参加者</th><th>支払い額</th></tr></thead>
+        <tbody>
+          <tr><td>Aさん（幹事）</td><td>2,677円（端数 77円 を含む）</td></tr>
+          <tr><td>Bさん</td><td>2,600円</td></tr>
+          <tr><td>Cさん</td><td>2,500円</td></tr>
+          <tr><td>合計</td><td>7,777円</td></tr>
+        </tbody>
+      </table>
+      <p>幹事が B・C さんから集めるのは 2,600円 と 2,500円 だけです。</p>
+
+      <h3>集金単位の選び方</h3>
+      <p>「自動」を選ぶと、1人あたりの平均額に合わせて単位を決めます。</p>
+      <table>
+        <thead><tr><th>1人あたりの平均</th><th>集金単位</th></tr></thead>
+        <tbody>
+          <tr><td>10,000円 以上</td><td>1,000円</td></tr>
+          <tr><td>1,000円 以上</td><td>100円</td></tr>
+          <tr><td>100円 以上</td><td>10円</td></tr>
+          <tr><td>100円 未満</td><td>1円</td></tr>
+        </tbody>
+      </table>
+      <p>現金で集めるなら 500円・1,000円 単位、キャッシュレス送金なら 1円 単位、のように使い分けるのもおすすめです。</p>
+
+      <h3>幹事に端数を負担させたくないとき</h3>
+      <p>
+        幹事の「固定」を 0円 にすると、幹事の持ち出しはゼロになり、残りの金額を他の参加者で分けます。
+        この場合の端数は、支払い額がいちばん多い人の金額に含まれます。
+      </p>
+
+      <p style="margin-top:20px;"><a href="index.html" class="btn" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff;background:var(--btn-bg);height:52px;">easy-split でキリよく割り勘する</a></p>
+      <p style="margin-top:12px;">関連：<a href="guide-keisha.html">傾斜割り勘の係数の決め方</a></p>
+    </article>
+  </main>
+
+  <div class="ad-container">
+    <!-- AD_PLACEHOLDER: Google AdSense code will be inserted here -->
+  </div>
+
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <a href="index.html">ホーム</a>
+      <a href="guide-keisha.html">係数の決め方</a>
+    </nav>
+    <nav class="footer-nav">
+      <a href="about.html">About</a>
+      <a href="terms.html">利用規約</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </nav>
+    <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
+  </footer>
+</body>
+</html>

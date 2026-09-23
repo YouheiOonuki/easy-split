@@ -1,0 +1,16 @@
+{
+  "name": "easy-split 傾斜割り勘・飲み会の清算",
+  "short_name": "easy-split",
+  "description": "飲み会の割り勘を傾斜つきで計算。幹事0円、2次会の合算、100円単位の集金に対応。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

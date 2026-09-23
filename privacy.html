@@ -5,7 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>プライバシーポリシー | easy-split</title>
   <meta name="description" content="easy-splitのプライバシーポリシーです。">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#1a1a2e">
+  <script>
+    try { var t = localStorage.getItem('easysplit_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375267956079717"
+       crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -52,6 +60,20 @@
       <p style="margin-top:8px;">
         これらのデータはお使いのブラウザにのみ保存されます。
         ブラウザの設定からいつでも削除できます。
+        また、オフラインでも使えるよう、本サービスのページやファイルをブラウザにキャッシュします（入力内容は含みません）。
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>共有リンクについて</h2>
+      <p>
+        「LINEで送る」「共有」「コピー」で作成される文面には、同じ計算を開くためのリンクが含まれます。
+        このリンクには<strong>参加者名・金額・係数などの入力内容</strong>が含まれており、
+        リンクを受け取った人や、送信に使ったサービス（LINE など）がその内容を見られる状態になります。
+      </p>
+      <p style="margin-top:8px;">
+        入力内容は URL の「#」以降に含まれるため、リンクを開いた際にも本サービスのサーバー（GitHub Pages）には送信されません。
+        実名を共有したくない場合は、ニックネームなどで入力してください。
       </p>
     </section>
 
@@ -116,9 +138,5 @@
     <p class="footer-copy">&copy; 2026 easy-split by Youhei</p>
   </footer>
 
-  <script>
-    const theme = localStorage.getItem('easysplit_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', theme);
-  </script>
 </body>
 </html>

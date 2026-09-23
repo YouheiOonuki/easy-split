@@ -64,7 +64,8 @@ npm test   # node --test（依存パッケージなし）
 
 - **HTML / CSS / JavaScript** のみ（フレームワーク・依存パッケージなし）
 - **データ保存**: localStorage のみ（サーバー通信なし）
-- **テーマ**: CSS 変数 + `data-theme` 属性
+- **テーマ**: CSS 変数 + `data-theme` 属性（`<head>` 内で先に適用し、読み込み時のちらつきを防止）
+- **CI**: GitHub Actions（`.github/workflows/test.yml`）で push のたびに `npm test` を実行
 
 ## GitHub Pages 公開手順
 
@@ -77,10 +78,22 @@ npm test   # node --test（依存パッケージなし）
 
 ## SEO 対策
 
-- `<title>` / `<meta description>` / `<meta keywords>` を設定済み
-- **OGP** (Open Graph Protocol) タグを設定済み
-- **JSON-LD** 構造化データ (`WebApplication`) を埋め込み済み
-- ファビコン (SVG / ICO / PNG) を設定済み
+- 日本語の `<title>` / `<meta description>`、`canonical` を設定済み（検索されるのは「傾斜 割り勘 計算」などの日本語）
+- **OGP**：LINE・X で大きく表示される 1200×630 の `og-image.png`（`summary_large_image`）
+- **JSON-LD** 構造化データ（`WebApplication`、無料・日本語）
+- トップページに使い方・傾斜割り勘の解説・よくある質問を掲載
+- ガイド記事：`guide-keisha.html`（係数の決め方）、`guide-hasuu.html`（端数処理のルール）
+- `sitemap.xml` / `robots.txt` を同梱（robots.txt も ads.txt と同じくドメイン直下でのみ有効。プロジェクトサイトのままなら Search Console で sitemap.xml を直接送信してください）
+
+## PWA（オフライン対応）
+
+- `manifest.webmanifest` と `sw.js`（Service Worker）で、一度開けば電波のない場所でも動作
+- 「ホーム画面に追加」でアプリのように起動（アイコン：`icon-192.png` / `icon-512.png` / `apple-touch-icon.png`）
+- Service Worker はキャッシュを表示しつつ裏で更新するため、デプロイした変更は**次回のアクセス時**に反映されます。ファイル構成を大きく変えたときは `sw.js` の `CACHE` のバージョンを上げてください
+
+## 共有リンク
+
+LINE・コピーで送る文面には、入力内容を URL の `#s=` 以降にエンコードしたリンクが入ります。受け取った人が開くと同じ計算が表示されます。`#` 以降はサーバーに送信されないため、静的サイトのままで動作します。
 
 ## Google AdSense 対策
 
@@ -88,13 +101,12 @@ AdSense 審査に通過しやすい構成を採用しています。
 
 - **About / 利用規約 / プライバシーポリシー** ページを完備
 - 各ページに十分なテキストコンテンツ
-- AdSense 自動広告のスクリプトを `index.html` の `<head>` に設置済み
+- AdSense 自動広告のスクリプトを全ページの `<head>` に設置済み
 - プライバシーポリシーに Google の第三者 Cookie・オプトアウト方法を記載済み
 - `ads.txt` を同梱。**ads.txt はドメイン直下（`https://example.com/ads.txt`）に置く必要があるため、独自ドメインで公開してください。** `https://<user>.github.io/easy-split/` のようなプロジェクトサイトのままでは認識されません
 
 ## 今後の拡張予定
 
-- **PWA 対応** — オフラインでも使えるように Service Worker を導入
 - **多言語対応** — 英語版の追加
 - **送金リンク生成** — PayPay / LINE Pay などの送金リンク連携
 - **グループ管理** — よく使うメンバーをグループとして保存

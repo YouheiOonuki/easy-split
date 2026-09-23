@@ -38,6 +38,7 @@
   const historyList = $('historyList');
   const clearHistoryBtn = $('clearHistory');
   const themeBtns = document.querySelectorAll('.theme-btn');
+  const sharedNotice = $('sharedNotice');
 
   const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
@@ -134,13 +135,73 @@
     saveDraft();
   }
 
+  // ---- Share link (inputs encoded in the URL hash; nothing leaves the browser) ----
+  function toBase64Url(str) {
+    let bin = '';
+    new TextEncoder().encode(str).forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function fromBase64Url(s) {
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  }
+
+  function encodeShare() {
+    const idx = new Map(state.participants.map((p, i) => [p.id, i]));
+    return toBase64Url(JSON.stringify({
+      v: 1,
+      b: state.bills.map(b => [b.name, b.total, b.excluded, b.absent.filter(id => idx.has(id)).map(id => idx.get(id))]),
+      p: state.participants.map(p => [p.name, p.weight, p.fixed]),
+      o: idx.get(state.organizerId),
+      u: state.unit
+    }));
+  }
+
+  function decodeShare(s) {
+    const d = JSON.parse(fromBase64Url(s));
+    if (!d || d.v !== 1 || !Array.isArray(d.p) || !Array.isArray(d.b) || !d.p.length || !d.b.length) return null;
+    const weight = w => Math.min(2, Math.max(0.5, Math.round(Number(w) * 10) / 10)) || 1;
+    return normalizeState({
+      participants: d.p.slice(0, 50).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 40), weight: weight(x[1]), fixed: x[2] })),
+      bills: d.b.slice(0, 10).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 20), total: x[1], excluded: x[2], absent: Array.isArray(x[3]) ? x[3] : [] })),
+      organizerId: Number.isInteger(d.o) ? d.o : 0,
+      unit: [1, 10, 100, 500, 1000].includes(d.u) ? d.u : 'auto',
+      paid: {}
+    });
+  }
+
+  // undefined: no share link / null: broken link / object: decoded state
+  function readShareLink() {
+    const m = location.hash.match(/^#s=([A-Za-z0-9_-]+)$/);
+    if (!m) return undefined;
+    window.history.replaceState(null, '', location.pathname + location.search);
+    try { return decodeShare(m[1]); } catch { return null; }
+  }
+
+  function showNotice(text) {
+    sharedNotice.textContent = text;
+    sharedNotice.classList.remove('hidden');
+  }
+
+  function initialState() {
+    const shared = readShareLink();
+    if (shared === null) showNotice('共有リンクを読み込めませんでした。');
+    if (!shared) return loadDraft();
+    const hasDraft = lsGet(LS_DRAFT) !== null;
+    if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は上書きされます）')) return loadDraft();
+    showNotice('共有された計算内容を表示しています');
+    return shared;
+  }
+
   // ---- Init ----
   function init() {
     loadTheme();
     historyToggle.checked = lsGet(LS_HISTORY_ON) !== '0';
     shareBtn.classList.toggle('hidden', !navigator.share);
 
-    state = loadDraft();
+    state = initialState();
+    saveDraft();
     applyStateToForm();
     renderHistory();
     bindEvents();
@@ -242,7 +303,10 @@
   function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     lsSet(LS_THEME, theme);
-    themeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
+    themeBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === theme);
+      btn.setAttribute('aria-pressed', String(btn.dataset.theme === theme));
+    });
   }
 
   // ---- Participants ----
@@ -599,7 +663,7 @@
     if (r.absorberId !== null) {
       lines.push('', '※' + unitLabel(r.unit) + 'で計算' + (r.remainder > 0 ? '（端数は' + absorberText(r) + 'が調整）' : ''));
     }
-    lines.push('', '▼ easy-split で計算', appUrl());
+    lines.push('', '▼ タップで同じ計算を開けます（easy-split）', appUrl() + '#s=' + encodeShare());
     return lines.join('\n');
   }
 
@@ -781,6 +845,11 @@
     });
 
     themeBtns.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
+
+    // A share link opened in a tab that already shows the app only changes the hash.
+    window.addEventListener('hashchange', () => {
+      if (/^#s=/.test(location.hash)) location.reload();
+    });
   }
 
   document.addEventListener('DOMContentLoaded', init);

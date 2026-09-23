@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://youheioonuki.github.io/easy-split/sitemap.xml
