@@ -1,5 +1,5 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v1';
+const CACHE = 'easy-split-v2';
 const SHELL = [
   './',
   'index.html',
@@ -9,11 +9,11 @@ const SHELL = [
   'manifest.webmanifest',
   'favicon.svg',
   'icon-192.png',
-  'about.html',
-  'terms.html',
-  'privacy.html',
+  'guide.html',
   'guide-keisha.html',
-  'guide-hasuu.html'
+  'guide-hasuu.html',
+  'about.html',
+  'privacy-policy.html'
 ];
 
 self.addEventListener('install', event => {

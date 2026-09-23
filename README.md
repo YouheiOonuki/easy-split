@@ -67,23 +67,49 @@ npm test   # node --test（依存パッケージなし）
 - **テーマ**: CSS 変数 + `data-theme` 属性（`<head>` 内で先に適用し、読み込み時のちらつきを防止）
 - **CI**: GitHub Actions（`.github/workflows/test.yml`）で push のたびに `npm test` を実行
 
-## GitHub Pages 公開手順
+## ファイル構成
 
-1. GitHub にリポジトリをプッシュ
-2. **Settings** → **Pages** を開く
-3. Source で **Deploy from a branch** を選択
-4. Branch を **main** (または公開したいブランチ) / **/ (root)** に設定
-5. **Save** をクリック
-6. 数分後に `https://<username>.github.io/easy-split/` で公開
+```
+easy-split/
+├── index.html            # アプリ本体（SEOメタタグ・構造化データ含む）
+├── style.css             # テーマ対応スタイルシート
+├── split.js              # 計算ロジック（画面処理から独立した純粋関数）
+├── main.js               # 画面・状態管理
+├── guide.html            # 使い方ガイド・よくある質問
+├── guide-keisha.html     # 記事：傾斜割り勘の係数の決め方
+├── guide-hasuu.html      # 記事：割り勘の端数処理のルール
+├── about.html            # 運営者情報・免責事項
+├── privacy-policy.html   # プライバシーポリシー（AdSense・Cloudflare Web Analytics）
+├── sw.js / manifest.webmanifest  # PWA（オフライン対応）
+├── favicon.svg / favicon.ico / icon-*.png / apple-touch-icon.png
+├── og-image.png          # SNS共有用画像（1200x630）
+├── sitemap.xml           # サイトマップ
+└── test/split.test.js    # 計算ロジックのテスト
+```
+
+## 公開 URL と構成
+
+公開 URL: **https://yorozu-craft.com/easy-split/**
+
+独自ドメイン `yorozu-craft.com` は、ユーザーサイト用リポジトリ `youheioonuki.github.io` に設定しています。
+GitHub Pages の仕組みにより、Pages を有効にしたリポジトリは自動で `yorozu-craft.com/<リポジトリ名>/` で配信されます。
+このリポジトリ自体には独自ドメインの設定（CNAME）は不要です。
+
+- `robots.txt` と `ads.txt` は検索エンジン・AdSense がドメイン直下のものしか読まないため、`youheioonuki.github.io` リポジトリ側で管理し、このツールの `sitemap.xml` をそこに登録しています。
+- フッターの「yorozu-craft トップ」は相対パス `../` なので、ドメインが変わっても動きます。
+- 全ページの `<head>` に AdSense のタグ、`</body>` 直前に Cloudflare Web Analytics のビーコンを入れています（`youheioonuki.github.io` の README「ツールを追加するとき」に準拠）。
+
+### このリポジトリの Pages 設定
+1. **Settings** → **Pages** を開く
+2. **Source** を `Deploy from a branch`、**Branch** を `main` / `/ (root)` にして **Save**
 
 ## SEO 対策
 
-- 日本語の `<title>` / `<meta description>`、`canonical` を設定済み（検索されるのは「傾斜 割り勘 計算」などの日本語）
-- **OGP**：LINE・X で大きく表示される 1200×630 の `og-image.png`（`summary_large_image`）
-- **JSON-LD** 構造化データ（`WebApplication`、無料・日本語）
-- トップページに使い方・傾斜割り勘の解説・よくある質問を掲載
-- ガイド記事：`guide-keisha.html`（係数の決め方）、`guide-hasuu.html`（端数処理のルール）
-- `sitemap.xml` / `robots.txt` を同梱（robots.txt も ads.txt と同じくドメイン直下でのみ有効。プロジェクトサイトのままなら Search Console で sitemap.xml を直接送信してください）
+- 日本語の `<title>` / `<meta description>`、`canonical`（`https://yorozu-craft.com/easy-split/...`）
+- **OGP / Twitter Card**：LINE・X で大きく表示される 1200×630 の `og-image.png`
+- **JSON-LD** 構造化データ（トップ：`WebApplication`、使い方：`FAQPage`）
+- 使い方ガイド・よくある質問、ガイド記事2本
+- `sitemap.xml`（Search Console に送信するのは `https://yorozu-craft.com/easy-split/sitemap.xml`）
 
 ## PWA（オフライン対応）
 
@@ -97,13 +123,14 @@ LINE・コピーで送る文面には、入力内容を URL の `#s=` 以降に�
 
 ## Google AdSense 対策
 
-AdSense 審査に通過しやすい構成を採用しています。
+審査とドメインの確認は yorozu-craft.com で済んでいるため、ツールごとの申請は不要です。
 
-- **About / 利用規約 / プライバシーポリシー** ページを完備
-- 各ページに十分なテキストコンテンツ
-- AdSense 自動広告のスクリプトを全ページの `<head>` に設置済み
-- プライバシーポリシーに Google の第三者 Cookie・オプトアウト方法を記載済み
-- `ads.txt` を同梱。**ads.txt はドメイン直下（`https://example.com/ads.txt`）に置く必要があるため、独自ドメインで公開してください。** `https://<user>.github.io/easy-split/` のようなプロジェクトサイトのままでは認識されません
+- [x] プライバシーポリシー（`privacy-policy.html`：AdSense、EEA 向けの Cookie 同意、Cloudflare Web Analytics、共有リンク）
+- [x] 運営者情報・免責事項（`about.html`）
+- [x] 全ページ共通のナビゲーション（上部・フッター）
+- [x] 十分なテキストコンテンツ（使い方ガイド + FAQ + ガイド記事2本）
+- [x] 全ページの `<head>` に AdSense タグ（`google-adsense-account` + `adsbygoogle.js`）
+- [x] 広告枠は操作を邪魔しないよう、アプリ・ガイドの各ページ最下部に1か所
 
 ## 今後の拡張予定
 
@@ -116,6 +143,6 @@ AdSense 審査に通過しやすい構成を採用しています。
 
 MIT License
 
-## 開発者
+## 運営
 
-**Youhei**
+yorozu-craft（YouheiOonuki）

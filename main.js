@@ -46,7 +46,7 @@
   const LS_NAMES = 'easysplit_names';
   const LS_DRAFT = 'easysplit_draft';
 
-  const APP_URL = 'https://youheioonuki.github.io/easy-split/';
+  const APP_URL = 'https://yorozu-craft.com/easy-split/';
   const COPY_LABEL = '📋 コピー';
   const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const PRESETS = [['上司', 1.5], ['標準', 1.0], ['飲まない', 0.8], ['若手', 0.7], ['遅刻', 0.5]];

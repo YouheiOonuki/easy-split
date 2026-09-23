@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使い方・よくある質問｜easy-split 傾斜割り勘アプリ</title>
+  <meta name="description" content="飲み会の傾斜割り勘・清算アプリ easy-split の使い方ガイドとよくある質問。係数の設定、幹事の持ち出しゼロ、2次会の合算、端数処理、LINE での共有、集金チェックの使い方を解説します。">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://yorozu-craft.com/easy-split/guide.html">
+
+  <meta property="og:title" content="使い方・よくある質問｜easy-split 傾斜割り勘アプリ">
+  <meta property="og:description" content="係数の設定、幹事の持ち出しゼロ、2次会の合算、端数処理、LINE での共有の使い方。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yorozu-craft.com/easy-split/guide.html">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:image" content="https://yorozu-craft.com/easy-split/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- FAQ構造化データ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "このアプリは無料ですか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "はい、完全無料です。会員登録やアプリのインストールも不要で、ブラウザからすぐにお使いいただけます。" }
+      },
+      {
+        "@type": "Question",
+        "name": "入力した名前や金額はどこかに送信されますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "いいえ。入力内容はお使いのブラウザのローカルストレージにだけ保存され、サーバーには送信されません。" }
+      },
+      {
+        "@type": "Question",
+        "name": "端数はどう処理されますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "1人あたりの金額を集金単位（自動・1円・10円・100円・500円・1000円）でそろえ、割り切れない端数は幹事の支払い額に含めます。幹事以外の人はキリのいい金額を払うだけで、合計はお会計と必ず一致します。" }
+      },
+      {
+        "@type": "Question",
+        "name": "幹事の持ち出しをゼロにできますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "はい。幹事の行の「固定」を押して 0円 にすると、残りの金額を他の参加者で係数割りします。" }
+      },
+      {
+        "@type": "Question",
+        "name": "2次会だけ参加した人がいる場合は？",
+        "acceptedAnswer": { "@type": "Answer", "text": "「＋ 会計を追加」で2次会を作り、参加した人を選ぶと、会計ごとに参加した人だけで分けた金額を1人ずつ合計して表示します。" }
+      },
+      {
+        "@type": "Question",
+        "name": "電波の悪いお店でも使えますか？",
+        "acceptedAnswer": { "@type": "Answer", "text": "一度開いたことがあれば、オフラインでも動作します。ブラウザのメニューから「ホーム画面に追加」しておくと、アプリのように起動できます。" }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Google AdSense（サイト所有確認 + 広告配信スクリプト） -->
+  <meta name="google-adsense-account" content="ca-pub-5375267956079717">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375267956079717"
+     crossorigin="anonymous"></script>
+
+  <script>
+    try { var t = localStorage.getItem('easysplit_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="./favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <nav class="site-nav" aria-label="メインナビゲーション">
+    <a href="./" class="nav-brand">easy-split 傾斜割り勘</a>
+    <ul class="nav-links">
+      <li><a href="./">ホーム</a></li>
+      <li><a href="./guide.html" aria-current="page">使い方</a></li>
+      <li><a href="./guide.html#faq">よくある質問</a></li>
+      <li><a href="./about.html">運営者情報</a></li>
+      <li><a href="./privacy-policy.html">プライバシーポリシー</a></li>
+    </ul>
+  </nav>
+
+  <main class="container legal-page">
+
+    <article class="card content-section">
+      <h1>使い方ガイド</h1>
+      <p>飲み会の割り勘を、傾斜つきで計算してそのまま LINE で送るまでの流れをご紹介します。</p>
+
+      <div class="guide-content">
+        <div class="guide-step">
+          <h3>1. 合計金額を入力する</h3>
+          <p>お店の会計額を入れます。持ち込み代など、割り勘にしない分は「割り勘対象外」に入れてください。</p>
+        </div>
+        <div class="guide-step">
+          <h3>2. 人数を合わせる</h3>
+          <p>＋／−で人数を増減します。名前は Aさん・Bさん… と自動で入るので、そのままでも使えます。入力した名前は次回から候補に出てきます。</p>
+        </div>
+        <div class="guide-step">
+          <h3>3. 傾斜をつける</h3>
+          <p>上司は「上司 1.5」、お酒を飲まない人は「飲まない 0.8」など、プリセットをタップするだけで係数を設定できます。スライダーで 0.5〜2.0 の間を細かく調整することもできます。</p>
+        </div>
+        <div class="guide-step">
+          <h3>4. 金額が決まっている人は「固定」</h3>
+          <p>途中参加で「3,000円だけ」の人や、幹事の持ち出しをゼロにしたいときは、その人の「固定」を押して金額を入れます。残りの金額を他の人で係数割りします。</p>
+        </div>
+        <div class="guide-step">
+          <h3>5. LINE で送って集金する</h3>
+          <p>結果は入力と同時に表示されます。「LINEで送る」でグループにそのまま共有し、支払いを受けたら名前をタップして集金済みにしましょう。未集金の合計も表示されます。</p>
+        </div>
+      </div>
+
+      <h2>便利な機能</h2>
+
+      <h3>傾斜割り勘（係数割り）</h3>
+      <p>参加者ごとに係数を決め、係数の比率で合計金額を分けます。たとえば 16,000円 を 上司 1.5・同僚 1.0・同僚 1.0・遅れて来た人 0.5 で分けると、係数の合計 4.0 に対して 6,000円・4,000円・4,000円・2,000円 になります。</p>
+
+      <h3>集金単位と端数処理</h3>
+      <p>1人あたりの金額を「集金単位」（自動・1円・10円・100円・500円・1000円）でそろえ、割り切れない端数は幹事の支払い額に含めます。幹事はお店に全額を立て替えて集金する立場なので、幹事以外の人はキリのいい金額を払うだけで済み、合計はお会計と必ず一致します。</p>
+
+      <h3>2次会・3次会の合算</h3>
+      <p>「＋ 会計を追加」で会計を増やし、それぞれの会計に参加した人を選びます。1次会だけ参加した人は1次会の分だけ、最後まで参加した人は全部の合計が請求されます。LINE に送る文面にも、会計ごとの金額と参加者が入ります。</p>
+
+      <h3>共有リンク</h3>
+      <p>LINE やコピーで送る文面には、同じ計算を開けるリンクが入ります。受け取った人がタップすると、同じ入力内容と結果が表示されます。</p>
+
+      <h3>履歴・テーマ・オフライン</h3>
+      <p>送った・コピーした結果は履歴に最新5件まで保存され、「この内容を復元」で入力を呼び戻せます。テーマはダーク・シンプル・メタルの3種類。一度開けばオフラインでも動くので、電波の悪いお店でも安心です。</p>
+
+      <h2>こんな場面で使えます</h2>
+      <ul class="use-cases">
+        <li><strong>会社の飲み会</strong> — 上司・先輩・後輩で負担に差をつけたいとき</li>
+        <li><strong>歓送迎会</strong> — 主役を 0円 に固定して、残りをみんなで割る</li>
+        <li><strong>2次会・3次会</strong> — 途中で帰った人がいても、参加した分だけを合算</li>
+        <li><strong>同窓会・サークル</strong> — 人数が多くても＋ボタンと自動の名前ですぐ入力</li>
+        <li><strong>お酒を飲む人・飲まない人がいる会</strong> — 飲まない人の係数を少し下げる</li>
+      </ul>
+
+      <h2>もっと詳しく</h2>
+      <ul>
+        <li><a href="./guide-keisha.html">傾斜割り勘の係数の決め方（上司・若手・飲まない人の目安）</a></li>
+        <li><a href="./guide-hasuu.html">割り勘の端数処理のルール（幹事が困らない集金のしかた）</a></li>
+      </ul>
+    </article>
+
+    <article id="faq" class="card content-section">
+      <h2>よくある質問</h2>
+      <dl class="faq-list">
+        <dt>このアプリは無料ですか？</dt>
+        <dd>はい、完全無料です。会員登録やアプリのインストールも不要で、ブラウザからすぐにお使いいただけます。</dd>
+
+        <dt>入力した名前や金額はどこかに送信されますか？</dt>
+        <dd>いいえ。入力内容はお使いのブラウザのローカルストレージにだけ保存され、サーバーには送信されません。詳しくは <a href="./privacy-policy.html">プライバシーポリシー</a> をご覧ください。</dd>
+
+        <dt>端数はどう処理されますか？</dt>
+        <dd>1人あたりの金額を集金単位でそろえ、割り切れない端数は幹事の支払い額に含めます。幹事以外の人はキリのいい金額を払うだけで、合計はお会計と必ず一致します。</dd>
+
+        <dt>幹事の持ち出しをゼロにできますか？</dt>
+        <dd>はい。幹事の行の「固定」を押して 0円 にすると、残りの金額を他の参加者で係数割りします。この場合の端数は、支払い額がいちばん多い人の金額に含まれます。</dd>
+
+        <dt>2次会だけ参加した人がいる場合は？</dt>
+        <dd>「＋ 会計を追加」で2次会を作り、参加した人を選んでください。会計ごとに参加した人だけで分けた金額を、1人ずつ合計して表示します。</dd>
+
+        <dt>計算結果を他の人にも見てもらえますか？</dt>
+        <dd>「LINEで送る」「コピー」で送る文面にリンクが入っていて、受け取った人がタップすると同じ計算内容を開けます。リンクには参加者名と金額が含まれるので、実名を出したくない場合はニックネームで入力してください。</dd>
+
+        <dt>電波の悪いお店でも使えますか？</dt>
+        <dd>一度開いたことがあれば、オフラインでも動作します。ブラウザのメニューから「ホーム画面に追加」しておくと、アプリのように起動できます。</dd>
+
+        <dt>ブラウザを閉じても入力は残りますか？</dt>
+        <dd>はい。入力中の内容はブラウザに自動で保存され、次に開いたときに復元されます。最初の状態に戻したいときは「入力をリセット」を押してください。</dd>
+
+        <dt>対応しているブラウザは？</dt>
+        <dd>Chrome、Safari、Edge、Firefox など、主要なモダンブラウザに対応しています。スマートフォンでの利用を前提に設計しています。</dd>
+      </dl>
+    </article>
+
+  </main>
+
+  <footer class="app-footer">
+    <nav class="footer-nav" aria-label="フッターナビゲーション">
+      <ul>
+        <li><a href="../">yorozu-craft トップ</a></li>
+        <li><a href="./">ホーム</a></li>
+        <li><a href="./guide.html" aria-current="page">使い方</a></li>
+        <li><a href="./guide.html#faq">よくある質問</a></li>
+        <li><a href="./about.html">運営者情報</a></li>
+        <li><a href="./privacy-policy.html">プライバシーポリシー</a></li>
+      </ul>
+    </nav>
+    <p class="copyright">&copy; 2026 yorozu-craft. All rights reserved.</p>
+
+    <div class="ad-container">
+      <!-- AD_PLACEHOLDER: Google AdSense code will be inserted here -->
+      <div class="ad-placeholder ad-responsive" aria-hidden="true">
+        <p>広告スペース</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
