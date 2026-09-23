@@ -126,8 +126,8 @@ LINE・コピーで送る文面には、入力内容を URL の `#s=` 以降に�
 
 審査とドメインの確認は yorozu-craft.com で済んでいるため、ツールごとの申請は不要です。
 
-- [x] プライバシーポリシー（yorozu-craft 共通ページ `../privacy-policy.html#easy-split`。共有リンクの扱いもここに記載）
-- [x] 運営者情報・免責事項（yorozu-craft 共通ページ `../about.html#easy-split`）
+- [x] プライバシーポリシー（yorozu-craft 共通ページ `../privacy-policy.html`。共有リンクの扱いもここに記載）
+- [x] 運営者情報・免責事項（yorozu-craft 共通ページ `../about.html`）
 - [x] 全ページ共通のナビゲーション（上部・フッター）
 - [x] 十分なテキストコンテンツ（使い方ガイド + FAQ + ガイド記事2本）
 - [x] 全ページの `<head>` に AdSense タグ（`google-adsense-account` + `adsbygoogle.js`）
