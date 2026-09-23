@@ -1,5 +1,5 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v2';
+const CACHE = 'easy-split-v3';
 const SHELL = [
   './',
   'index.html',
@@ -11,9 +11,8 @@ const SHELL = [
   'icon-192.png',
   'guide.html',
   'guide-keisha.html',
-  'guide-hasuu.html',
-  'about.html',
-  'privacy-policy.html'
+  'guide-hasuu.html'
+  // 運営者情報・プライバシーポリシーは yorozu-craft 共通ページ（../about.html 等）に移したのでキャッシュしない
 ];
 
 self.addEventListener('install', event => {

@@ -78,8 +78,8 @@ easy-split/
 ├── guide.html            # 使い方ガイド・よくある質問
 ├── guide-keisha.html     # 記事：傾斜割り勘の係数の決め方
 ├── guide-hasuu.html      # 記事：割り勘の端数処理のルール
-├── about.html            # 運営者情報・免責事項
-├── privacy-policy.html   # プライバシーポリシー（AdSense・Cloudflare Web Analytics）
+├── about.html            # yorozu-craft 共通の運営者情報（../about.html）へ移動する案内ページ
+├── privacy-policy.html   # yorozu-craft 共通のプライバシーポリシー（../privacy-policy.html）へ移動する案内ページ
 ├── sw.js / manifest.webmanifest  # PWA（オフライン対応）
 ├── favicon.svg / favicon.ico / icon-*.png / apple-touch-icon.png
 ├── og-image.png          # SNS共有用画像（1200x630）
@@ -126,8 +126,8 @@ LINE・コピーで送る文面には、入力内容を URL の `#s=` 以降に�
 
 審査とドメインの確認は yorozu-craft.com で済んでいるため、ツールごとの申請は不要です。
 
-- [x] プライバシーポリシー（`privacy-policy.html`：AdSense、EEA 向けの Cookie 同意、Cloudflare Web Analytics、共有リンク）
-- [x] 運営者情報・免責事項（`about.html`）
+- [x] プライバシーポリシー（yorozu-craft 共通ページ `../privacy-policy.html#easy-split`。共有リンクの扱いもここに記載）
+- [x] 運営者情報・免責事項（yorozu-craft 共通ページ `../about.html#easy-split`）
 - [x] 全ページ共通のナビゲーション（上部・フッター）
 - [x] 十分なテキストコンテンツ（使い方ガイド + FAQ + ガイド記事2本）
 - [x] 全ページの `<head>` に AdSense タグ（`google-adsense-account` + `adsbygoogle.js`）
