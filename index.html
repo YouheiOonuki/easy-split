@@ -67,9 +67,17 @@
 
     <!-- 参加者 -->
     <section class="card">
-      <h2>👥 参加者</h2>
+      <div class="card-head">
+        <h2>👥 参加者</h2>
+        <div class="stepper">
+          <button id="removeLast" class="stepper-btn" aria-label="1人減らす">−</button>
+          <span id="countLabel" class="stepper-count" aria-live="polite"></span>
+          <button id="addParticipant" class="stepper-btn" aria-label="1人増やす">＋</button>
+        </div>
+      </div>
+      <p class="field-hint">係数で傾斜をつけられます。「固定」で金額を直接指定（途中参加・幹事0円など）</p>
       <div id="participantsList"></div>
-      <button id="addParticipant" class="btn btn-add">＋ 参加者を追加</button>
+      <button id="addParticipantBottom" class="btn btn-add">＋ 参加者を追加</button>
     </section>
 
     <!-- 幹事 -->
@@ -79,22 +87,7 @@
         <label for="organizerSelect">幹事</label>
         <select id="organizerSelect"></select>
       </div>
-      <p class="field-hint">集金単位で割り切れない端数は幹事が調整します</p>
-      <div class="toggle-row">
-        <label for="organizerFixed">幹事の支払い額を固定する</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="organizerFixed">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div id="organizerSettings" class="hidden">
-        <div class="amount-input-group sub">
-          <label for="organizerAmount">幹事の支払い額</label>
-          <input type="number" id="organizerAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
-          <span class="currency">円</span>
-        </div>
-        <p class="field-hint">0円にすると幹事の持ち出しゼロ。残りを他の参加者で係数割りします</p>
-      </div>
+      <p class="field-hint">集金単位で割り切れない端数は幹事が調整します。幹事の持ち出しをゼロにするには、幹事の「固定」を 0円 にしてください</p>
     </section>
 
     <!-- 集金単位 -->
@@ -111,22 +104,25 @@
       <p class="field-hint center" id="unitHint"></p>
     </section>
 
-    <!-- 計算ボタン -->
-    <p id="formError" class="form-error hidden" role="alert"></p>
-    <button id="calculateBtn" class="btn btn-calculate">計算する</button>
-    <button id="resetBtn" class="btn btn-link">入力をリセット</button>
-
-    <!-- 結果 -->
-    <section id="resultSection" class="card hidden">
+    <!-- 結果（入力に合わせて自動計算） -->
+    <section id="resultSection" class="card">
       <h2>📊 計算結果</h2>
-      <div id="resultList"></div>
-      <p id="resultNote" class="field-hint"></p>
-      <div id="resultTotal" class="result-total"></div>
-      <div class="share-actions">
-        <button id="shareBtn" class="btn btn-copy hidden">📤 共有</button>
-        <button id="copyBtn" class="btn btn-copy">📋 コピー</button>
+      <p id="formError" class="form-error hidden" role="alert"></p>
+      <div id="resultBody">
+        <div id="resultList"></div>
+        <p id="resultNote" class="field-hint"></p>
+        <div id="resultTotal" class="result-total"></div>
+        <p id="collectSummary" class="collect-summary" aria-live="polite"></p>
+        <button id="lineBtn" class="btn btn-line">LINEで送る</button>
+        <div class="share-actions">
+          <button id="shareBtn" class="btn btn-copy hidden">📤 共有</button>
+          <button id="copyBtn" class="btn btn-copy">📋 コピー</button>
+        </div>
+        <p class="field-hint center">送った・コピーした結果は履歴に保存されます</p>
       </div>
     </section>
+
+    <button id="resetBtn" class="btn btn-link">入力をリセット</button>
 
     <!-- 履歴 -->
     <section class="card">

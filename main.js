@@ -11,21 +11,22 @@
   const excludedAmountInput = $('excludedAmount');
   const participantsList = $('participantsList');
   const addParticipantBtn = $('addParticipant');
+  const addParticipantBottomBtn = $('addParticipantBottom');
+  const removeLastBtn = $('removeLast');
+  const countLabel = $('countLabel');
   const organizerSelect = $('organizerSelect');
-  const organizerFixedToggle = $('organizerFixed');
-  const organizerSettings = $('organizerSettings');
-  const organizerAmountInput = $('organizerAmount');
   const unitRadios = document.querySelectorAll('input[name="unit"]');
   const unitHint = $('unitHint');
   const formError = $('formError');
-  const calculateBtn = $('calculateBtn');
-  const resetBtn = $('resetBtn');
-  const resultSection = $('resultSection');
+  const resultBody = $('resultBody');
   const resultList = $('resultList');
   const resultNote = $('resultNote');
   const resultTotal = $('resultTotal');
+  const collectSummary = $('collectSummary');
+  const lineBtn = $('lineBtn');
   const shareBtn = $('shareBtn');
   const copyBtn = $('copyBtn');
+  const resetBtn = $('resetBtn');
   const historyToggle = $('historyToggle');
   const historyList = $('historyList');
   const clearHistoryBtn = $('clearHistory');
@@ -37,22 +38,21 @@
   const LS_NAMES = 'easysplit_names';
   const LS_DRAFT = 'easysplit_draft';
 
+  const APP_URL = 'https://youheioonuki.github.io/easy-split/';
   const COPY_LABEL = '📋 コピー';
-  const SHARE_LABEL = '📤 共有';
+  const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const PRESETS = [['上司', 1.5], ['標準', 1.0], ['飲まない', 0.8], ['若手', 0.7], ['遅刻', 0.5]];
+
+  const person = (id, name) => ({ id, name, weight: 1.0, fixed: null });
 
   const defaultState = () => ({
     total: 6000,
     excluded: 0,
-    participants: [
-      { id: 0, name: 'Aさん', weight: 1.0 },
-      { id: 1, name: 'Bさん', weight: 1.0 },
-      { id: 2, name: 'Cさん', weight: 1.0 }
-    ],
+    participants: [person(0, 'Aさん'), person(1, 'Bさん'), person(2, 'Cさん')],
     nextId: 3,
     organizerId: 0,
-    organizerFixed: false,
-    organizerAmount: 0,
-    unit: 'auto'
+    unit: 'auto',
+    paid: {}
   });
 
   let state;
@@ -72,15 +72,40 @@
     try { return JSON.parse(lsGet(key)) || fallback; } catch { return fallback; }
   }
 
-  // ---- Draft (survives the tab being killed while switching to LINE) ----
+  // ---- State ----
+  function normalizeState(d) {
+    const s = Object.assign(defaultState(), d);
+    s.participants = s.participants.map(p => ({
+      id: p.id,
+      name: p.name || '',
+      weight: Number(p.weight) || 1.0,
+      fixed: Number.isInteger(p.fixed) ? p.fixed : null
+    }));
+    // Drafts saved before per-person fixed amounts existed
+    if (d.organizerFixed) {
+      const o = s.participants.find(p => p.id === s.organizerId);
+      if (o) o.fixed = d.organizerAmount || 0;
+    }
+    delete s.organizerFixed;
+    delete s.organizerAmount;
+    s.nextId = Math.max(s.nextId || 0, ...s.participants.map(p => p.id + 1));
+    if (!s.paid || typeof s.paid !== 'object') s.paid = {};
+    return s;
+  }
+
   function loadDraft() {
     const d = lsJson(LS_DRAFT, null);
     if (!d || !Array.isArray(d.participants) || d.participants.length === 0) return defaultState();
-    return Object.assign(defaultState(), d);
+    return normalizeState(d);
   }
 
   function saveDraft() {
     lsSet(LS_DRAFT, JSON.stringify(state));
+  }
+
+  function changed() {
+    recalc();
+    saveDraft();
   }
 
   // ---- Init ----
@@ -93,14 +118,12 @@
     applyStateToForm();
     renderHistory();
     bindEvents();
+    recalc();
   }
 
   function applyStateToForm() {
     totalAmountInput.value = state.total || '';
     excludedAmountInput.value = state.excluded || 0;
-    organizerFixedToggle.checked = state.organizerFixed;
-    organizerSettings.classList.toggle('hidden', !state.organizerFixed);
-    organizerAmountInput.value = state.organizerAmount || 0;
     unitRadios.forEach(r => { r.checked = r.value === String(state.unit); });
     updateUnitHint();
     renderParticipants();
@@ -119,25 +142,34 @@
   }
 
   // ---- Participants ----
+  function nextName() {
+    const used = new Set(state.participants.map(p => p.name));
+    for (const L of LETTERS) if (!used.has(L + 'さん')) return L + 'さん';
+    return '参加者' + (state.participants.length + 1);
+  }
+
   function addParticipant() {
-    state.participants.push({ id: state.nextId++, name: '', weight: 1.0 });
+    state.participants.push(person(state.nextId++, nextName()));
     renderParticipants();
     updateOrganizerSelect();
-    saveDraft();
-    const inputs = participantsList.querySelectorAll('.participant-name');
-    inputs[inputs.length - 1].focus();
+    changed();
   }
 
   function removeParticipant(id) {
     if (state.participants.length <= 1) return;
     state.participants = state.participants.filter(p => p.id !== id);
+    delete state.paid[id];
     renderParticipants();
     updateOrganizerSelect();
-    saveDraft();
+    changed();
   }
+
+  const displayName = p => p.name.trim() || '(名前なし)';
 
   function renderParticipants() {
     participantsList.innerHTML = '';
+    countLabel.textContent = state.participants.length + '人';
+    removeLastBtn.disabled = state.participants.length <= 1;
 
     const datalist = document.createElement('datalist');
     datalist.id = 'savedNames';
@@ -148,59 +180,129 @@
     });
     participantsList.appendChild(datalist);
 
-    state.participants.forEach((p, i) => {
-      const row = document.createElement('div');
-      row.className = 'participant-row';
+    state.participants.forEach((p, i) => participantsList.appendChild(participantRow(p, i)));
+  }
 
-      const nameInput = document.createElement('input');
-      nameInput.type = 'text';
-      nameInput.className = 'participant-name';
-      nameInput.placeholder = '名前';
-      nameInput.value = p.name;
-      nameInput.setAttribute('list', 'savedNames');
-      nameInput.setAttribute('aria-label', (i + 1) + '人目の名前');
-      nameInput.addEventListener('input', () => {
-        p.name = nameInput.value;
-        updateOrganizerSelect();
-      });
-      nameInput.addEventListener('blur', () => saveName(p.name));
+  function participantRow(p, i) {
+    const label = p.name || (i + 1) + '人目';
+    const row = document.createElement('div');
+    row.className = 'participant-row';
 
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn-remove';
-      removeBtn.textContent = '✕';
-      removeBtn.setAttribute('aria-label', (p.name || (i + 1) + '人目') + 'を削除');
-      removeBtn.addEventListener('click', () => removeParticipant(p.id));
-
-      const weightGroup = document.createElement('div');
-      weightGroup.className = 'participant-weight-group';
-
-      const sliderId = 'weight-' + p.id;
-      const weightLabel = document.createElement('label');
-      weightLabel.textContent = '係数';
-      weightLabel.htmlFor = sliderId;
-
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.id = sliderId;
-      slider.className = 'weight-slider';
-      slider.min = '0.5';
-      slider.max = '2.0';
-      slider.step = '0.1';
-      slider.value = p.weight;
-
-      const weightValue = document.createElement('span');
-      weightValue.className = 'weight-value';
-      weightValue.textContent = Number(p.weight).toFixed(1);
-
-      slider.addEventListener('input', () => {
-        p.weight = parseFloat(slider.value);
-        weightValue.textContent = p.weight.toFixed(1);
-      });
-
-      weightGroup.append(weightLabel, slider, weightValue);
-      row.append(nameInput, removeBtn, weightGroup);
-      participantsList.appendChild(row);
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'participant-name';
+    nameInput.placeholder = '名前';
+    nameInput.value = p.name;
+    nameInput.setAttribute('list', 'savedNames');
+    nameInput.setAttribute('aria-label', (i + 1) + '人目の名前');
+    nameInput.addEventListener('input', () => {
+      p.name = nameInput.value;
+      updateOrganizerSelect();
     });
+    nameInput.addEventListener('blur', () => saveName(p.name));
+
+    const isFixed = p.fixed !== null;
+    const fixedBtn = document.createElement('button');
+    fixedBtn.className = 'btn-fixed' + (isFixed ? ' active' : '');
+    fixedBtn.textContent = '固定';
+    fixedBtn.setAttribute('aria-pressed', String(isFixed));
+    fixedBtn.setAttribute('aria-label', label + 'の金額を固定');
+    fixedBtn.addEventListener('click', () => {
+      p.fixed = p.fixed === null ? 0 : null;
+      renderParticipants();
+      changed();
+      const input = $('fixed-' + p.id);
+      if (input) input.focus();
+    });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.setAttribute('aria-label', label + 'を削除');
+    removeBtn.addEventListener('click', () => removeParticipant(p.id));
+
+    row.append(nameInput, fixedBtn, removeBtn);
+    if (isFixed) row.appendChild(fixedGroup(p));
+    else row.append(...weightControls(p));
+    return row;
+  }
+
+  function fixedGroup(p) {
+    const group = document.createElement('div');
+    group.className = 'amount-input-group sub fixed-group';
+
+    const lbl = document.createElement('label');
+    lbl.htmlFor = 'fixed-' + p.id;
+    lbl.textContent = '固定額';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = 'fixed-' + p.id;
+    input.inputMode = 'numeric';
+    input.min = '0';
+    input.step = '100';
+    input.value = p.fixed;
+    input.addEventListener('input', () => { p.fixed = toInt(input.value); });
+
+    const cur = document.createElement('span');
+    cur.className = 'currency';
+    cur.textContent = '円';
+
+    group.append(lbl, input, cur);
+    return group;
+  }
+
+  function weightControls(p) {
+    const weightGroup = document.createElement('div');
+    weightGroup.className = 'participant-weight-group';
+
+    const sliderId = 'weight-' + p.id;
+    const weightLabel = document.createElement('label');
+    weightLabel.textContent = '係数';
+    weightLabel.htmlFor = sliderId;
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.id = sliderId;
+    slider.className = 'weight-slider';
+    slider.min = '0.5';
+    slider.max = '2.0';
+    slider.step = '0.1';
+    slider.value = p.weight;
+
+    const weightValue = document.createElement('span');
+    weightValue.className = 'weight-value';
+
+    const presetRow = document.createElement('div');
+    presetRow.className = 'preset-row';
+
+    const sync = () => {
+      weightValue.textContent = p.weight.toFixed(1);
+      presetRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', Number(c.dataset.w) === p.weight));
+    };
+
+    PRESETS.forEach(([name, w]) => {
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.dataset.w = w;
+      chip.textContent = name + ' ' + w.toFixed(1);
+      chip.addEventListener('click', () => {
+        p.weight = w;
+        slider.value = w;
+        sync();
+        changed();
+      });
+      presetRow.appendChild(chip);
+    });
+
+    slider.addEventListener('input', () => {
+      p.weight = parseFloat(slider.value);
+      sync();
+    });
+
+    sync();
+    weightGroup.append(weightLabel, slider, weightValue);
+    return [weightGroup, presetRow];
   }
 
   function updateOrganizerSelect() {
@@ -211,7 +313,7 @@
     state.participants.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.name || '(名前なし)';
+      opt.textContent = displayName(p);
       organizerSelect.appendChild(opt);
     });
     organizerSelect.value = String(state.organizerId);
@@ -234,106 +336,152 @@
       : state.unit.toLocaleString() + '円単位で集金します';
   }
 
-  // ---- Calculation ----
+  // ---- Calculation (runs on every change) ----
   function toInt(value) {
     const n = parseInt(value, 10);
     return Number.isNaN(n) ? 0 : n;
   }
 
-  function showError(message) {
-    formError.textContent = message;
-    formError.classList.remove('hidden');
-    resultSection.classList.add('hidden');
-    formError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  function calculate() {
+  function recalc() {
     const res = EasySplit.computeSplit({
       total: state.total,
       excluded: state.excluded,
-      people: state.participants.map(p => ({ id: p.id, name: p.name.trim() || '(名前なし)', weight: p.weight })),
+      people: state.participants.map(p => ({ id: p.id, name: displayName(p), weight: p.weight, fixed: p.fixed })),
       organizerId: state.organizerId,
-      organizerFixedAmount: state.organizerFixed ? state.organizerAmount : null,
       unit: state.unit
     });
 
+    formError.classList.toggle('hidden', !res.error);
+    resultBody.classList.toggle('hidden', !!res.error);
     if (res.error) {
-      showError(res.error);
+      formError.textContent = res.error;
+      lastResult = null;
       return;
     }
 
-    formError.classList.add('hidden');
     lastResult = Object.assign({ total: state.total, excluded: state.excluded }, res);
-    displayResults(lastResult);
-    saveHistory(lastResult);
+    renderResults(lastResult);
   }
 
-  function unitLabel(unit) {
-    return unit === 1 ? '1円単位' : unit.toLocaleString() + '円単位';
+  const yen = n => n.toLocaleString() + '円';
+  const unitLabel = unit => (unit === 1 ? '1円単位' : yen(unit) + '単位');
+
+  function absorberText(r) {
+    const a = r.results.find(x => x.id === r.absorberId);
+    return a.isOrganizer ? '幹事' : a.name;
   }
 
-  function resultNoteText(r) {
-    let text = unitLabel(r.unit) + 'で計算しました。';
-    if (r.remainder > 0) {
-      const absorber = r.results.find(x => x.id === r.absorberId);
-      text += '端数 ' + r.remainder.toLocaleString() + '円 は ' + absorber.name +
-        (absorber.isOrganizer ? '（幹事）' : '') + ' が負担します。';
-    }
-    return text;
-  }
-
-  function displayResults(r) {
-    resultSection.classList.remove('hidden');
+  function renderResults(r) {
     resultList.innerHTML = '';
 
     r.results.forEach(x => {
-      const item = document.createElement('div');
-      item.className = 'result-item';
+      // The organizer collects the money, so only the others get a check mark.
+      const collectable = !x.isOrganizer;
+      const paid = collectable && !!state.paid[x.id];
+      const item = document.createElement(collectable ? 'button' : 'div');
+      item.className = 'result-item' + (paid ? ' paid' : '');
+
+      const check = document.createElement('span');
+      check.className = 'check' + (collectable ? '' : ' none');
+      check.textContent = paid ? '✓' : '';
 
       const name = document.createElement('span');
       name.className = 'result-name';
       name.textContent = x.name;
-      if (x.isOrganizer) {
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = '幹事';
-        name.appendChild(badge);
-      }
+      if (x.isOrganizer) name.appendChild(badge('幹事'));
+      if (x.isFixed) name.appendChild(badge('固定', 'badge-muted'));
 
       const amount = document.createElement('span');
       amount.className = 'result-amount';
       amount.textContent = x.amount.toLocaleString() + ' 円';
 
-      item.append(name, amount);
+      item.append(check, name, amount);
+
+      if (collectable) {
+        item.setAttribute('aria-pressed', String(paid));
+        item.setAttribute('aria-label', x.name + ' ' + yen(x.amount) + (paid ? ' 集金済み' : ' 未集金'));
+        item.addEventListener('click', () => {
+          if (state.paid[x.id]) delete state.paid[x.id];
+          else state.paid[x.id] = true;
+          saveDraft();
+          renderResults(lastResult);
+        });
+      }
       resultList.appendChild(item);
     });
 
-    resultNote.textContent = resultNoteText(r);
+    if (r.absorberId === null) {
+      resultNote.textContent = '全員の金額が固定されています。';
+    } else {
+      resultNote.textContent = unitLabel(r.unit) + 'で計算しました。' +
+        (r.remainder > 0 ? '端数 ' + yen(r.remainder) + ' は ' + absorberText(r) + ' が負担します。' : '');
+    }
 
     const sum = r.results.reduce((s, x) => s + x.amount, 0);
     resultTotal.textContent = '合計: ' + sum.toLocaleString() + ' 円' +
       (r.excluded > 0 ? ' (対象外: ' + r.excluded.toLocaleString() + ' 円)' : '') +
       ' / 総額: ' + r.total.toLocaleString() + ' 円';
 
-    copyBtn.textContent = COPY_LABEL;
-    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderCollectSummary(r);
   }
 
-  // ---- Share / Copy ----
+  function badge(text, extra) {
+    const b = document.createElement('span');
+    b.className = 'badge' + (extra ? ' ' + extra : '');
+    b.textContent = text;
+    return b;
+  }
+
+  function renderCollectSummary(r) {
+    const payers = r.results.filter(x => !x.isOrganizer);
+    const paidCount = payers.filter(x => state.paid[x.id]).length;
+    const unpaid = payers.filter(x => !state.paid[x.id]).reduce((s, x) => s + x.amount, 0);
+
+    collectSummary.classList.toggle('done', payers.length > 0 && paidCount === payers.length);
+    if (payers.length === 0) collectSummary.textContent = '';
+    else if (paidCount === payers.length) collectSummary.textContent = '✅ 全員の集金が完了しました';
+    else if (paidCount === 0) collectSummary.textContent = '名前をタップすると集金済みにできます（未集金 ' + yen(unpaid) + '）';
+    else collectSummary.textContent = '集金済み ' + paidCount + '/' + payers.length + '人 ・ 未集金 ' + yen(unpaid);
+  }
+
+  // ---- Share / Copy / LINE ----
+  function appUrl() {
+    return /^https?:$/.test(location.protocol) ? location.origin + location.pathname : APP_URL;
+  }
+
   function buildShareText(r) {
     const sum = r.results.reduce((s, x) => s + x.amount, 0);
     const lines = ['【割り勘清算】', ''];
     r.results.forEach(x => {
-      lines.push(x.name + (x.isOrganizer ? '（幹事）' : '') + '：' + x.amount.toLocaleString() + '円');
+      lines.push(x.name + (x.isOrganizer ? '（幹事）' : '') + '：' + yen(x.amount));
     });
-    lines.push('', '─'.repeat(16), '合計：' + sum.toLocaleString() + '円');
+    lines.push('', '─'.repeat(16), '合計：' + yen(sum));
     if (r.excluded > 0) {
-      lines.push('対象外：' + r.excluded.toLocaleString() + '円');
-      lines.push('総額：' + r.total.toLocaleString() + '円');
+      lines.push('対象外：' + yen(r.excluded));
+      lines.push('総額：' + yen(r.total));
     }
-    lines.push('', '※' + unitLabel(r.unit) + 'で計算' + (r.remainder > 0 ? '（端数は調整済み）' : ''));
-    lines.push('※ easy-split で計算しました');
+    if (r.absorberId !== null) {
+      lines.push('', '※' + unitLabel(r.unit) + 'で計算' + (r.remainder > 0 ? '（端数は' + absorberText(r) + 'が調整）' : ''));
+    }
+    lines.push('', '▼ easy-split で計算', appUrl());
     return lines.join('\n');
+  }
+
+  // Sending or copying marks the result as final, so it is recorded in history.
+  function withShareText(fn) {
+    return () => {
+      if (!lastResult) return;
+      saveHistory(lastResult);
+      fn(buildShareText(lastResult));
+    };
+  }
+
+  function sendLine(text) {
+    window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  }
+
+  function shareNative(text) {
+    navigator.share({ title: '割り勘清算', text }).catch(() => {});
   }
 
   function flashCopyLabel(label) {
@@ -341,16 +489,8 @@
     setTimeout(() => { copyBtn.textContent = COPY_LABEL; }, 2500);
   }
 
-  function shareResults() {
-    if (!lastResult) return;
-    navigator.share({ title: '割り勘清算', text: buildShareText(lastResult) }).catch(() => {});
-  }
-
-  function copyResults() {
-    if (!lastResult) return;
-    const text = buildShareText(lastResult);
+  function copyText(text) {
     const fallback = () => flashCopyLabel(execCopy(text) ? '✅ コピーしました' : '❌ コピーできませんでした');
-
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => flashCopyLabel('✅ コピーしました'), fallback);
     } else {
@@ -374,17 +514,38 @@
   }
 
   // ---- History ----
+  function snapshotInput() {
+    return {
+      total: state.total,
+      excluded: state.excluded,
+      participants: state.participants.map(p => Object.assign({}, p)),
+      organizerId: state.organizerId,
+      unit: state.unit
+    };
+  }
+
   function saveHistory(r) {
     if (!historyToggle.checked) return;
     const history = lsJson(LS_HISTORY, []);
+    const input = snapshotInput();
+    if (history[0] && JSON.stringify(history[0].input) === JSON.stringify(input)) return;
     history.unshift({
       date: new Date().toLocaleString('ja-JP'),
       totalAmount: r.total,
       excludedAmount: r.excluded,
-      results: r.results.map(x => ({ name: x.name, amount: x.amount }))
+      results: r.results.map(x => ({ name: x.name, amount: x.amount })),
+      input
     });
     lsSet(LS_HISTORY, JSON.stringify(history.slice(0, 5)));
     renderHistory();
+  }
+
+  function restoreHistory(entry) {
+    if (!confirm('この内容を入力に復元しますか？（今の入力は上書きされます）')) return;
+    state = normalizeState(Object.assign({}, entry.input, { paid: {} }));
+    applyStateToForm();
+    changed();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function renderHistory() {
@@ -412,6 +573,14 @@
         item.appendChild(row);
       });
 
+      if (entry.input && Array.isArray(entry.input.participants)) {
+        const restore = document.createElement('button');
+        restore.className = 'btn-restore';
+        restore.textContent = '↩ この内容を復元';
+        restore.addEventListener('click', () => restoreHistory(entry));
+        item.appendChild(restore);
+      }
+
       historyList.appendChild(item);
     });
   }
@@ -420,14 +589,7 @@
   function bindEvents() {
     totalAmountInput.addEventListener('input', () => { state.total = toInt(totalAmountInput.value); });
     excludedAmountInput.addEventListener('input', () => { state.excluded = toInt(excludedAmountInput.value); });
-    organizerAmountInput.addEventListener('input', () => { state.organizerAmount = toInt(organizerAmountInput.value); });
-
     organizerSelect.addEventListener('change', () => { state.organizerId = Number(organizerSelect.value); });
-
-    organizerFixedToggle.addEventListener('change', () => {
-      state.organizerFixed = organizerFixedToggle.checked;
-      organizerSettings.classList.toggle('hidden', !state.organizerFixed);
-    });
 
     unitRadios.forEach(radio => {
       radio.addEventListener('change', () => {
@@ -436,24 +598,29 @@
       });
     });
 
-    // Element-level listeners above run first, then this persists the updated state.
-    const main = document.querySelector('main');
-    main.addEventListener('input', saveDraft);
-    main.addEventListener('change', saveDraft);
+    // Element-level listeners above update state first; this recalculates and persists.
+    const inputs = document.querySelectorAll('#totalAmount, #excludedAmount, #participantsList, #organizerSelect, input[name="unit"]');
+    inputs.forEach(el => {
+      el.addEventListener('input', changed);
+      el.addEventListener('change', changed);
+    });
 
     addParticipantBtn.addEventListener('click', addParticipant);
-    calculateBtn.addEventListener('click', calculate);
-    shareBtn.addEventListener('click', shareResults);
-    copyBtn.addEventListener('click', copyResults);
+    addParticipantBottomBtn.addEventListener('click', addParticipant);
+    removeLastBtn.addEventListener('click', () => {
+      removeParticipant(state.participants[state.participants.length - 1].id);
+    });
+
+    lineBtn.addEventListener('click', withShareText(sendLine));
+    shareBtn.addEventListener('click', withShareText(shareNative));
+    copyBtn.addEventListener('click', withShareText(copyText));
 
     resetBtn.addEventListener('click', () => {
       if (!confirm('入力内容をリセットしますか？')) return;
       state = defaultState();
-      lastResult = null;
-      saveDraft();
       applyStateToForm();
-      formError.classList.add('hidden');
-      resultSection.classList.add('hidden');
+      changed();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     historyToggle.addEventListener('change', () => {
