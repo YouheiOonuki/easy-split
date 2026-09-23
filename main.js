@@ -7,6 +7,13 @@
 
   const $ = id => document.getElementById(id);
 
+  const billTabs = $('billTabs');
+  const billNameRow = $('billNameRow');
+  const billNameInput = $('billName');
+  const removeBillBtn = $('removeBill');
+  const attendeeBox = $('attendeeBox');
+  const attendeeList = $('attendeeList');
+  const billHint = $('billHint');
   const totalAmountInput = $('totalAmount');
   const excludedAmountInput = $('excludedAmount');
   const participantsList = $('participantsList');
@@ -44,10 +51,13 @@
   const PRESETS = [['上司', 1.5], ['標準', 1.0], ['飲まない', 0.8], ['若手', 0.7], ['遅刻', 0.5]];
 
   const person = (id, name) => ({ id, name, weight: 1.0, fixed: null });
+  // `absent` (rather than attendees) so newly added participants join every bill by default.
+  const newBill = (id, name, total) => ({ id, name, total, excluded: 0, absent: [] });
 
   const defaultState = () => ({
-    total: 6000,
-    excluded: 0,
+    bills: [newBill(0, '1次会', 6000)],
+    nextBillId: 1,
+    activeBillId: 0,
     participants: [person(0, 'Aさん'), person(1, 'Bさん'), person(2, 'Cさん')],
     nextId: 3,
     organizerId: 0,
@@ -88,6 +98,22 @@
     }
     delete s.organizerFixed;
     delete s.organizerAmount;
+    // Drafts / history saved before multiple bills existed
+    if (!Array.isArray(d.bills) || d.bills.length === 0) {
+      s.bills = [newBill(0, '1次会', Number.isInteger(d.total) ? d.total : 6000)];
+      s.bills[0].excluded = d.excluded || 0;
+    }
+    delete s.total;
+    delete s.excluded;
+    s.bills = s.bills.map(b => ({
+      id: b.id,
+      name: b.name || '会計',
+      total: Number.isInteger(b.total) ? b.total : 0,
+      excluded: Number.isInteger(b.excluded) ? b.excluded : 0,
+      absent: Array.isArray(b.absent) ? b.absent : []
+    }));
+    s.nextBillId = Math.max(s.nextBillId || 0, ...s.bills.map(b => b.id + 1));
+    if (!s.bills.some(b => b.id === s.activeBillId)) s.activeBillId = s.bills[0].id;
     s.nextId = Math.max(s.nextId || 0, ...s.participants.map(p => p.id + 1));
     if (!s.paid || typeof s.paid !== 'object') s.paid = {};
     return s;
@@ -122,12 +148,90 @@
   }
 
   function applyStateToForm() {
-    totalAmountInput.value = state.total || '';
-    excludedAmountInput.value = state.excluded || 0;
     unitRadios.forEach(r => { r.checked = r.value === String(state.unit); });
     updateUnitHint();
     renderParticipants();
     updateOrganizerSelect();
+    renderBills();
+  }
+
+  // ---- Bills (1次会・2次会…) ----
+  const activeBill = () => state.bills.find(b => b.id === state.activeBillId);
+  const multi = () => state.bills.length > 1;
+
+  function renderBills() {
+    renderBillTabs();
+    const b = activeBill();
+    totalAmountInput.value = b.total || '';
+    excludedAmountInput.value = b.excluded || 0;
+    billNameInput.value = b.name;
+    billNameRow.classList.toggle('hidden', !multi());
+    attendeeBox.classList.toggle('hidden', !multi());
+    billHint.classList.toggle('hidden', multi());
+    renderAttendees();
+  }
+
+  function renderBillTabs() {
+    billTabs.innerHTML = '';
+    state.bills.forEach(b => {
+      const tab = document.createElement('button');
+      tab.className = 'bill-tab' + (b.id === state.activeBillId ? ' active' : '');
+      tab.setAttribute('aria-pressed', String(b.id === state.activeBillId));
+      const name = document.createElement('span');
+      name.textContent = b.name || '会計';
+      const amount = document.createElement('small');
+      amount.textContent = b.total ? yen(b.total) : '未入力';
+      tab.append(name, amount);
+      tab.addEventListener('click', () => {
+        state.activeBillId = b.id;
+        renderBills();
+        saveDraft();
+      });
+      billTabs.appendChild(tab);
+    });
+
+    const add = document.createElement('button');
+    add.className = 'bill-tab bill-add';
+    add.textContent = '＋ 会計を追加';
+    add.addEventListener('click', addBill);
+    billTabs.appendChild(add);
+  }
+
+  function renderAttendees() {
+    if (!multi()) return;
+    const b = activeBill();
+    attendeeList.innerHTML = '';
+    state.participants.forEach(p => {
+      const here = !b.absent.includes(p.id);
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (here ? ' active' : '');
+      chip.setAttribute('aria-pressed', String(here));
+      chip.textContent = (here ? '✓ ' : '') + displayName(p);
+      chip.addEventListener('click', () => {
+        b.absent = here ? b.absent.concat(p.id) : b.absent.filter(id => id !== p.id);
+        renderAttendees();
+        changed();
+      });
+      attendeeList.appendChild(chip);
+    });
+  }
+
+  function addBill() {
+    const b = newBill(state.nextBillId++, (state.bills.length + 1) + '次会', 0);
+    state.bills.push(b);
+    state.activeBillId = b.id;
+    renderBills();
+    changed();
+    totalAmountInput.focus();
+  }
+
+  function removeBill() {
+    const b = activeBill();
+    if (!multi() || !confirm('「' + b.name + '」を削除しますか？')) return;
+    state.bills = state.bills.filter(x => x.id !== b.id);
+    state.activeBillId = state.bills[0].id;
+    renderBills();
+    changed();
   }
 
   // ---- Theme ----
@@ -152,15 +256,18 @@
     state.participants.push(person(state.nextId++, nextName()));
     renderParticipants();
     updateOrganizerSelect();
+    renderAttendees();
     changed();
   }
 
   function removeParticipant(id) {
     if (state.participants.length <= 1) return;
     state.participants = state.participants.filter(p => p.id !== id);
+    state.bills.forEach(b => { b.absent = b.absent.filter(x => x !== id); });
     delete state.paid[id];
     renderParticipants();
     updateOrganizerSelect();
+    renderAttendees();
     changed();
   }
 
@@ -198,6 +305,7 @@
     nameInput.addEventListener('input', () => {
       p.name = nameInput.value;
       updateOrganizerSelect();
+      renderAttendees();
     });
     nameInput.addEventListener('blur', () => saveName(p.name));
 
@@ -343,9 +451,14 @@
   }
 
   function recalc() {
-    const res = EasySplit.computeSplit({
-      total: state.total,
-      excluded: state.excluded,
+    const res = EasySplit.computeMulti({
+      bills: state.bills.map(b => ({
+        id: b.id,
+        name: b.name.trim() || '会計',
+        total: b.total,
+        excluded: b.excluded,
+        attendees: state.participants.filter(p => !b.absent.includes(p.id)).map(p => p.id)
+      })),
       people: state.participants.map(p => ({ id: p.id, name: displayName(p), weight: p.weight, fixed: p.fixed })),
       organizerId: state.organizerId,
       unit: state.unit
@@ -359,7 +472,10 @@
       return;
     }
 
-    lastResult = Object.assign({ total: state.total, excluded: state.excluded }, res);
+    lastResult = Object.assign({
+      total: res.bills.reduce((s, b) => s + b.total, 0),
+      excluded: res.bills.reduce((s, b) => s + b.excluded, 0)
+    }, res);
     renderResults(lastResult);
   }
 
@@ -390,6 +506,12 @@
       name.textContent = x.name;
       if (x.isOrganizer) name.appendChild(badge('幹事'));
       if (x.isFixed) name.appendChild(badge('固定', 'badge-muted'));
+      if (r.bills.length > 1) {
+        const sub = document.createElement('small');
+        sub.className = 'result-sub';
+        sub.textContent = attendedLabel(r, x);
+        name.appendChild(sub);
+      }
 
       const amount = document.createElement('span');
       amount.className = 'result-amount';
@@ -425,6 +547,11 @@
     renderCollectSummary(r);
   }
 
+  function attendedLabel(r, x) {
+    const names = r.bills.filter(b => x.bills.includes(b.id)).map(b => b.name);
+    return names.length ? names.join('・') : '不参加';
+  }
+
   function badge(text, extra) {
     const b = document.createElement('span');
     b.className = 'badge' + (extra ? ' ' + extra : '');
@@ -452,6 +579,15 @@
   function buildShareText(r) {
     const sum = r.results.reduce((s, x) => s + x.amount, 0);
     const lines = ['【割り勘清算】', ''];
+    if (r.bills.length > 1) {
+      r.bills.forEach(b => {
+        const who = b.attendees.length === r.results.length
+          ? '全員'
+          : r.results.filter(x => b.attendees.includes(x.id)).map(x => x.name).join('・');
+        lines.push('■ ' + b.name + ' ' + yen(b.total) + '（' + who + '）');
+      });
+      lines.push('');
+    }
     r.results.forEach(x => {
       lines.push(x.name + (x.isOrganizer ? '（幹事）' : '') + '：' + yen(x.amount));
     });
@@ -516,8 +652,7 @@
   // ---- History ----
   function snapshotInput() {
     return {
-      total: state.total,
-      excluded: state.excluded,
+      bills: state.bills.map(b => Object.assign({}, b, { absent: b.absent.slice() })),
       participants: state.participants.map(p => Object.assign({}, p)),
       organizerId: state.organizerId,
       unit: state.unit
@@ -587,8 +722,16 @@
 
   // ---- Events ----
   function bindEvents() {
-    totalAmountInput.addEventListener('input', () => { state.total = toInt(totalAmountInput.value); });
-    excludedAmountInput.addEventListener('input', () => { state.excluded = toInt(excludedAmountInput.value); });
+    totalAmountInput.addEventListener('input', () => {
+      activeBill().total = toInt(totalAmountInput.value);
+      renderBillTabs();
+    });
+    excludedAmountInput.addEventListener('input', () => { activeBill().excluded = toInt(excludedAmountInput.value); });
+    billNameInput.addEventListener('input', () => {
+      activeBill().name = billNameInput.value;
+      renderBillTabs();
+    });
+    removeBillBtn.addEventListener('click', removeBill);
     organizerSelect.addEventListener('change', () => { state.organizerId = Number(organizerSelect.value); });
 
     unitRadios.forEach(radio => {
@@ -599,7 +742,7 @@
     });
 
     // Element-level listeners above update state first; this recalculates and persists.
-    const inputs = document.querySelectorAll('#totalAmount, #excludedAmount, #participantsList, #organizerSelect, input[name="unit"]');
+    const inputs = document.querySelectorAll('#totalAmount, #excludedAmount, #billName, #participantsList, #organizerSelect, input[name="unit"]');
     inputs.forEach(el => {
       el.addEventListener('input', changed);
       el.addEventListener('change', changed);

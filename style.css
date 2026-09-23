@@ -448,6 +448,65 @@ input[type="number"] {
   box-shadow: 0 3px 12px var(--shadow);
 }
 
+/* ---- Bills (1次会・2次会…) ---- */
+.bill-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 10px;
+  padding-bottom: 2px;
+}
+
+.bill-tab {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 48px;
+  padding: 4px 12px;
+  border: 2px solid var(--input-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bill-tab small {
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+.bill-tab.active {
+  border-color: var(--accent);
+  background: rgba(233, 69, 96, 0.12);
+  color: var(--text-primary);
+}
+
+.bill-add {
+  border-style: dashed;
+}
+
+.bill-name-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#attendeeBox .field-hint {
+  margin-top: 12px;
+}
+
+.result-sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
 /* ---- Participant count stepper ---- */
 .card-head {
   display: flex;

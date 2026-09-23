@@ -51,9 +51,14 @@
   </header>
 
   <main class="container">
-    <!-- 合計金額 -->
+    <!-- 会計（1次会・2次会…） -->
     <section class="card">
-      <h2>💰 合計金額</h2>
+      <h2>💰 会計</h2>
+      <div id="billTabs" class="bill-tabs"></div>
+      <div id="billNameRow" class="bill-name-row hidden">
+        <input type="text" id="billName" class="participant-name" aria-label="会計の名前" placeholder="会計の名前">
+        <button id="removeBill" class="btn-remove" aria-label="この会計を削除">✕</button>
+      </div>
       <div class="amount-input-group">
         <input type="number" id="totalAmount" inputmode="numeric" placeholder="合計金額を入力" min="0" step="100">
         <span class="currency">円</span>
@@ -63,6 +68,11 @@
         <input type="number" id="excludedAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
         <span class="currency">円</span>
       </div>
+      <div id="attendeeBox" class="hidden">
+        <p class="field-hint">この会計に参加した人（タップで切り替え）</p>
+        <div id="attendeeList" class="preset-row"></div>
+      </div>
+      <p id="billHint" class="field-hint">2次会がある場合は「＋ 会計を追加」。参加した人だけで割ります</p>
     </section>
 
     <!-- 参加者 -->
