@@ -185,8 +185,31 @@
     try { return decodeShare(m[1]); } catch { return null; }
   }
 
+  // 旅のしおり（tabi-shiori）の「傾斜割り勘で開く」から来たか。
+  // しおりは同じサイトから #s= 付きで開くので、同一オリジンの参照元のパスで見分ける
+  function cameFromShiori() {
+    try {
+      const ref = new URL(document.referrer);
+      return ref.origin === location.origin && ref.pathname.includes('/tabi-shiori/');
+    } catch { return false; }
+  }
+
+  function noticeLine(before, href, label) {
+    const p = document.createElement('span');
+    p.className = 'shared-line';
+    p.append(before);
+    if (href) {
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = label;
+      p.append(a);
+    }
+    return p;
+  }
+
   // withNewLink: 共有リンクで来た人向けに「自分の割り勘を新しく始める」を添える
-  function showNotice(text, withNewLink) {
+  // fromShiori: 旅のしおりから来たときは「しおりに戻る」を出す
+  function showNotice(text, withNewLink, fromShiori) {
     sharedNotice.textContent = text;
     if (withNewLink) {
       const btn = document.createElement('button');
@@ -201,7 +224,11 @@
         sharedNotice.classList.add('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-      sharedNotice.append(document.createElement('br'), btn);
+      sharedNotice.append(document.createElement('br'), btn,
+        noticeLine('傾斜・幹事0円・2次会の合算ができます。登録なし。'),
+        fromShiori
+          ? noticeLine('', '../tabi-shiori/', 'しおりに戻る')
+          : noticeLine('旅行なら → ', '../tabi-shiori/', '旅のしおりも作れます'));
     }
     sharedNotice.classList.remove('hidden');
   }
@@ -212,7 +239,8 @@
     if (!shared) return loadDraft();
     const hasDraft = lsGet(LS_DRAFT) !== null;
     if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は上書きされます）')) return loadDraft();
-    showNotice('共有された計算内容を表示しています', true);
+    const fromShiori = cameFromShiori();
+    showNotice(fromShiori ? '旅のしおりから渡されたメンバーと費用を表示しています' : '共有された計算内容を表示しています', true, fromShiori);
     return shared;
   }
 

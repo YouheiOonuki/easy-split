@@ -522,6 +522,28 @@ input[type="number"] {
   cursor: pointer;
 }
 
+.shared-line {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.shared-notice a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.next-link {
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
+/* 背景のカード色の上でアクセント色だと読みにくいテーマがあるので、本文の色＋下線にする */
+.card .next-link a {
+  color: var(--text-primary);
+}
+
 @media (max-width: 480px) {
   .shared-notice {
     margin: 12px 16px 0;
