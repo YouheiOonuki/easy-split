@@ -145,5 +145,71 @@
     }));
   }
 
-  return { allocate, autoUnit, computeSplit, computeMulti };
+  // ---- Backup file (README「ツールを追加するとき」20。決定 D31) ----
+  // 形式: { tool, version, exportedAt, data }。data はブラウザに保存しているものと同じ形
+  const BACKUP_VERSION = 1;
+
+  // 書き出すファイル名: <ツール名>-backup-YYYYMMDD.json（日付は端末の時計）
+  function backupFileName(tool, date) {
+    const d = date || new Date();
+    return tool + '-backup-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.json';
+  }
+
+  function buildBackup(tool, data, date) {
+    return { tool, version: BACKUP_VERSION, exportedAt: (date || new Date()).toISOString(), data };
+  }
+
+  // 読み込んだファイルの文字列を確かめる。{ ok: true, data } か { ok: false, error: 画面に出す文 }
+  function parseBackup(text, tool, requiredKeys) {
+    let o;
+    try { o = JSON.parse(text); } catch { o = null; }
+    if (!o || typeof o !== 'object' || Array.isArray(o) || typeof o.tool !== 'string') {
+      return { ok: false, error: 'ファイルを読み取れませんでした。このツールの「ファイルに書き出す」で作った .json ファイルを選んでください。' };
+    }
+    if (o.tool !== tool) {
+      return { ok: false, error: 'ほかのツール（' + o.tool.slice(0, 40) + '）のファイルです。このツールで書き出したファイルを選んでください。' };
+    }
+    if (o.version !== BACKUP_VERSION) {
+      return { ok: false, error: typeof o.version === 'number' && o.version > BACKUP_VERSION
+        ? '新しい版のツールで書き出したファイルのため読み込めません。ページを再読み込みしてから、もう一度お試しください。'
+        : 'ファイルの形式が正しくないため読み込めません。' };
+    }
+    const data = o.data;
+    const missing = !data || typeof data !== 'object' || Array.isArray(data) ||
+      (requiredKeys || []).some(k => data[k] === undefined || data[k] === null);
+    if (missing) return { ok: false, error: 'ファイルの中身が足りないため読み込めません。' };
+    return { ok: true, data };
+  }
+
+  // 名前の入力候補: 空でない文字列だけ、重複なし、最新 50 件（main.js の saveName と同じ上限）
+  function normalizeNames(list) {
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    list.forEach(n => {
+      const t = typeof n === 'string' ? n.trim() : '';
+      if (t && !out.includes(t)) out.push(t);
+    });
+    return out.slice(-50);
+  }
+
+  // 計算履歴: 結果の一覧があるものだけ、最新 5 件。入力（input）は復元するときに normalizeState を通す
+  function normalizeHistory(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter(e => e && typeof e === 'object' && Array.isArray(e.results))
+      .slice(0, 5)
+      .map(e => {
+        const entry = {
+          date: String(e.date || ''),
+          totalAmount: Number(e.totalAmount) || 0,
+          excludedAmount: Number(e.excludedAmount) || 0,
+          results: e.results.filter(x => x && typeof x === 'object').map(x => ({ name: String(x.name || ''), amount: Number(x.amount) || 0 }))
+        };
+        if (e.input && typeof e.input === 'object' && Array.isArray(e.input.participants) && e.input.participants.length > 0 &&
+          e.input.participants.every(x => x && typeof x === 'object')) entry.input = e.input;
+        return entry;
+      });
+  }
+
+  return { allocate, autoUnit, computeSplit, computeMulti, backupFileName, buildBackup, parseBackup, normalizeNames, normalizeHistory };
 });

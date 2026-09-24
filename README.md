@@ -84,7 +84,8 @@ easy-split/
 ├── favicon.svg / favicon.ico / icon-*.png / apple-touch-icon.png
 ├── og-image.png          # SNS共有用画像（1200x630）
 ├── sitemap.xml           # サイトマップ
-└── test/split.test.js    # 計算ロジックのテスト
+├── test/split.test.js    # 計算ロジックのテスト
+└── test/backup.test.js   # ファイルへの書き出し・読み込みのテスト
 ```
 
 ## 公開 URL と構成
