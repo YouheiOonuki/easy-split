@@ -43,6 +43,7 @@
   const backupImportBtn = $('backupImport');
   const backupFile = $('backupFile');
   const backupMsg = $('backupMsg');
+  const excludedLabel = $('excludedLabel');
 
   const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
@@ -74,6 +75,55 @@
 
   let state;
   let lastResult = null;
+
+  // ---- 上端の固定バーと「くわしく入れる」の状態表示（screen.js。yorozu-plans の SCREEN.md 1.1） ----
+  // 読み込み時から結果が出ているので、利用者がスクロールか入力をするまではバーを出さない（CLS を出さない）
+  const bar = window.YorozuScreen.fixedBar({ bar: 'fixbar', watch: 'resultList', jump: 'resultSection', text: 'fixbar-text' });
+  let barArmed = false;
+  function armBar() {
+    if (barArmed) return;
+    barArmed = true;
+    window.removeEventListener('scroll', armBar);
+    document.removeEventListener('input', armBar);
+    document.removeEventListener('change', armBar);
+    updateBar();
+  }
+  window.addEventListener('scroll', armBar, { passive: true });
+  document.addEventListener('input', armBar);
+  document.addEventListener('change', armBar);
+
+  // バーには 1 人あたりの金額（固定の人を除く。全員固定なら全員）を 1 つか幅で出す
+  function updateBar() {
+    if (!barArmed || !lastResult) { bar.set(''); return; }
+    const free = lastResult.results.filter(x => !x.isFixed);
+    const amounts = (free.length ? free : lastResult.results).map(x => x.amount);
+    const lo = Math.min(...amounts), hi = Math.max(...amounts);
+    bar.set('1人 ' + (lo === hi ? yen(lo) : lo.toLocaleString() + '〜' + yen(hi)));
+  }
+
+  function updateSummaries() {
+    const ps = state.participants;
+    const parts = [];
+    if (ps.some(p => p.fixed === null && p.weight !== 1)) parts.push('係数あり');
+    const fixedCount = ps.filter(p => p.fixed !== null).length;
+    if (fixedCount) parts.push('固定 ' + fixedCount + '人');
+    const organizer = ps.find(p => p.id === state.organizerId);
+    const excluded = state.bills.filter(b => b.excluded > 0);
+    const history = lsJson(LS_HISTORY, []);
+    window.YorozuScreen.detailsSummary({
+      'opt-people': parts.length ? parts.join('・') : '全員 係数 1.0',
+      'opt-organizer': organizer ? displayName(organizer) : '—',
+      'opt-unit': state.unit === 'auto'
+        ? '自動' + (lastResult ? '（' + unitLabel(lastResult.unit) + '）' : '')
+        : unitLabel(state.unit),
+      'opt-excluded': excluded.length
+        ? excluded.map(b => (multi() ? (b.name.trim() || '会計') + ' ' : '') + yen(b.excluded)).join('・')
+        : 'なし',
+      'opt-history': !historyToggle.checked ? '保存しない' : history.length ? history.length + '件' : 'なし'
+    });
+    const b = activeBill();
+    excludedLabel.textContent = multi() ? '割り勘対象外（' + (b.name.trim() || '会計') + '）' : '割り勘対象外';
+  }
 
   // ---- Storage helpers (storage can throw in private mode) ----
   function lsGet(key) {
@@ -280,6 +330,7 @@
     attendeeBox.classList.toggle('hidden', !multi());
     billHint.classList.toggle('hidden', multi());
     renderAttendees();
+    updateSummaries();
   }
 
   function renderBillTabs() {
@@ -583,6 +634,8 @@
     if (res.error) {
       formError.textContent = res.error;
       lastResult = null;
+      updateBar();
+      updateSummaries();
       return;
     }
 
@@ -591,6 +644,8 @@
       excluded: res.bills.reduce((s, b) => s + b.excluded, 0)
     }, res);
     renderResults(lastResult);
+    updateBar();
+    updateSummaries();
   }
 
   const yen = n => n.toLocaleString() + '円';
@@ -832,6 +887,7 @@
 
       historyList.appendChild(item);
     });
+    if (state) updateSummaries();
   }
 
   // ---- Events ----
@@ -886,6 +942,7 @@
         lsRemove(LS_HISTORY);
         renderHistory();
       }
+      updateSummaries();
     });
 
     clearHistoryBtn.addEventListener('click', () => {
