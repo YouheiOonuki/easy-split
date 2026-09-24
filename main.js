@@ -39,12 +39,18 @@
   const clearHistoryBtn = $('clearHistory');
   const themeBtns = document.querySelectorAll('.theme-btn');
   const sharedNotice = $('sharedNotice');
+  const backupExportBtn = $('backupExport');
+  const backupImportBtn = $('backupImport');
+  const backupFile = $('backupFile');
+  const backupMsg = $('backupMsg');
 
   const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
   const LS_HISTORY_ON = 'easysplit_history_on';
   const LS_NAMES = 'easysplit_names';
   const LS_DRAFT = 'easysplit_draft';
+
+  const TOOL = 'easy-split';
 
   const APP_URL = 'https://yorozu-craft.com/easy-split/';
   const COPY_LABEL = '📋 コピー';
@@ -845,6 +851,59 @@
     });
 
     themeBtns.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
+
+    // ---- Backup file (README「ツールを追加するとき」20。決定 D31) ----
+    // 中身はこの端末の中で作り、どこにも送信しない。機種変更のときはファイルを移して読み込む
+    backupExportBtn.addEventListener('click', () => {
+      const data = {
+        draft: state,
+        names: lsJson(LS_NAMES, []),
+        history: lsJson(LS_HISTORY, []),
+        historyOn: historyToggle.checked,
+        theme: document.documentElement.getAttribute('data-theme')
+      };
+      const blob = new Blob([JSON.stringify(EasySplit.buildBackup(TOOL, data), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = EasySplit.backupFileName(TOOL);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      backupMsg.textContent = 'ファイルに書き出しました。機種変更のときは、このファイルを新しい端末に移して「ファイルから読み込む」を押してください。';
+    });
+    backupImportBtn.addEventListener('click', () => backupFile.click());
+    backupFile.addEventListener('change', () => {
+      const file = backupFile.files && backupFile.files[0];
+      backupFile.value = '';
+      if (!file) return;
+      if (file.size > 1024 * 1024) { backupMsg.textContent = 'ファイルが大きすぎます。このツールで書き出したファイルを選んでください。'; return; }
+      file.text().then(text => {
+        const r = EasySplit.parseBackup(text, TOOL, ['draft']);
+        if (!r.ok) { backupMsg.textContent = r.error; return; }
+        const d = r.data.draft;
+        let next;
+        try {
+          // loadDraft と同じ条件で確かめてから normalizeState でそろえる
+          if (!d || !Array.isArray(d.participants) || d.participants.length === 0 ||
+              !d.participants.every(p => p && Number.isInteger(p.id))) throw new Error('no participants');
+          next = normalizeState(d);
+        } catch {
+          backupMsg.textContent = 'ファイルの中身が正しくないため読み込めません。';
+          return;
+        }
+        if (!confirm('ファイルの内容で、今の入力・履歴・名前の候補・設定を置き換えます。よろしいですか？')) return;
+        state = next;
+        lsSet(LS_NAMES, JSON.stringify(EasySplit.normalizeNames(r.data.names)));
+        historyToggle.checked = r.data.historyOn !== false;
+        lsSet(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
+        const history = historyToggle.checked ? EasySplit.normalizeHistory(r.data.history) : [];
+        if (history.length) lsSet(LS_HISTORY, JSON.stringify(history)); else lsRemove(LS_HISTORY);
+        if ([...themeBtns].some(btn => btn.dataset.theme === r.data.theme)) setTheme(r.data.theme);
+        applyStateToForm();
+        changed();
+        renderHistory();
+        backupMsg.textContent = 'ファイルから読み込みました。';
+      }, () => { backupMsg.textContent = 'ファイルを読み取れませんでした。'; });
+    });
 
     // A share link opened in a tab that already shows the app only changes the hash.
     window.addEventListener('hashchange', () => {
