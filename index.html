@@ -63,6 +63,11 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+  <!-- 上端の固定バー（yorozu-plans の SCREEN.md 1.1・D59）。結果が画面の外にあるときだけ screen.js が出す。読み込み時は hidden -->
+  <div class="fixbar" id="fixbar" role="status" hidden>
+    <a href="#resultSection"><span id="fixbar-text"></span> ▸ 結果へ</a>
+  </div>
+
   <!-- Header -->
   <header class="app-header">
     <h1 class="app-title">easy-split</h1>
@@ -76,22 +81,18 @@
 
   <p id="sharedNotice" class="shared-notice hidden" role="status"></p>
 
+  <!-- 画面の骨組み「入力 → 結果」（SCREEN.md 1.1）: 会計と人数 → 計算結果 → くわしく入れる（名前・係数・固定、幹事、集金単位、対象外）→ 履歴 -->
   <main class="container">
-    <!-- 会計（1次会・2次会…） -->
-    <section class="card">
-      <h2>💰 会計</h2>
+    <!-- 必須の入力: 合計金額と人数。会計（1次会・2次会…）のタブもここ -->
+    <fieldset class="card req">
+      <legend>💰 会計</legend>
       <div id="billTabs" class="bill-tabs"></div>
       <div id="billNameRow" class="bill-name-row hidden">
         <input type="text" id="billName" class="participant-name" aria-label="会計の名前" placeholder="会計の名前">
         <button id="removeBill" class="btn-remove" aria-label="この会計を削除">✕</button>
       </div>
       <div class="amount-input-group">
-        <input type="number" id="totalAmount" inputmode="numeric" placeholder="合計金額を入力" min="0" step="100">
-        <span class="currency">円</span>
-      </div>
-      <div class="amount-input-group sub">
-        <label for="excludedAmount">割り勘対象外</label>
-        <input type="number" id="excludedAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
+        <input type="number" id="totalAmount" inputmode="numeric" placeholder="合計金額を入力" min="0" step="100" aria-label="合計金額">
         <span class="currency">円</span>
       </div>
       <div id="attendeeBox" class="hidden">
@@ -99,50 +100,19 @@
         <div id="attendeeList" class="preset-row"></div>
       </div>
       <p id="billHint" class="field-hint">2次会がある場合は「＋ 会計を追加」。参加した人だけで割ります</p>
-    </section>
-
-    <!-- 参加者 -->
-    <section class="card">
-      <div class="card-head">
-        <h2>👥 参加者</h2>
-        <div class="stepper">
+      <div class="card-head people-head">
+        <span class="people-label" id="peopleLabel">👥 参加者</span>
+        <div class="stepper" role="group" aria-labelledby="peopleLabel">
           <button id="removeLast" class="stepper-btn" aria-label="1人減らす">−</button>
           <span id="countLabel" class="stepper-count" aria-live="polite"></span>
           <button id="addParticipant" class="stepper-btn" aria-label="1人増やす">＋</button>
         </div>
       </div>
-      <p class="field-hint">係数で傾斜をつけられます。「固定」で金額を直接指定（途中参加・幹事0円など）</p>
-      <div id="participantsList"></div>
-      <button id="addParticipantBottom" class="btn btn-add">＋ 参加者を追加</button>
-    </section>
-
-    <!-- 幹事 -->
-    <section class="card">
-      <h2>🎯 幹事</h2>
-      <div class="organizer-select-group">
-        <label for="organizerSelect">幹事</label>
-        <select id="organizerSelect"></select>
-      </div>
-      <p class="field-hint">集金単位で割り切れない端数は幹事が調整します。幹事の持ち出しをゼロにするには、幹事の「固定」を 0円 にしてください</p>
-    </section>
-
-    <!-- 集金単位 -->
-    <section class="card">
-      <h2>🔢 集金単位</h2>
-      <div class="unit-group" role="radiogroup" aria-label="集金単位">
-        <label class="unit-option"><input type="radio" name="unit" value="auto" checked><span>自動</span></label>
-        <label class="unit-option"><input type="radio" name="unit" value="1"><span>1円</span></label>
-        <label class="unit-option"><input type="radio" name="unit" value="10"><span>10円</span></label>
-        <label class="unit-option"><input type="radio" name="unit" value="100"><span>100円</span></label>
-        <label class="unit-option"><input type="radio" name="unit" value="500"><span>500円</span></label>
-        <label class="unit-option"><input type="radio" name="unit" value="1000"><span>1000円</span></label>
-      </div>
-      <p class="field-hint center" id="unitHint"></p>
-    </section>
+    </fieldset>
 
     <!-- 結果（入力に合わせて自動計算） -->
-    <section id="resultSection" class="card">
-      <h2>📊 計算結果</h2>
+    <section id="resultSection" class="card result-card" tabindex="-1" aria-labelledby="h-result">
+      <h2 id="h-result">📊 計算結果</h2>
       <p id="formError" class="form-error hidden" role="alert"></p>
       <div id="resultBody">
         <div id="resultList"></div>
@@ -159,11 +129,52 @@
       </div>
     </section>
 
+    <!-- くわしく入れる（SCREEN.md 1.1 の 4）。summary に今の状態を出す。開いた状態は保存しない -->
+    <div class="opts">
+      <details class="card opt" id="opt-people">
+        <summary>👥 名前・係数・固定: <span class="opt-state"></span></summary>
+        <p class="field-hint">係数で傾斜をつけられます。「固定」で金額を直接指定（途中参加・幹事0円など）</p>
+        <div id="participantsList"></div>
+        <button id="addParticipantBottom" class="btn btn-add">＋ 参加者を追加</button>
+      </details>
+
+      <details class="card opt" id="opt-organizer">
+        <summary>🎯 幹事: <span class="opt-state"></span></summary>
+        <div class="organizer-select-group">
+          <label for="organizerSelect">幹事</label>
+          <select id="organizerSelect"></select>
+        </div>
+        <p class="field-hint">集金単位で割り切れない端数は幹事が調整します。幹事の持ち出しをゼロにするには、幹事の「固定」を 0円 にしてください</p>
+      </details>
+
+      <details class="card opt" id="opt-unit">
+        <summary>🔢 集金単位: <span class="opt-state"></span></summary>
+        <div class="unit-group" role="radiogroup" aria-label="集金単位">
+          <label class="unit-option"><input type="radio" name="unit" value="auto" checked><span>自動</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="1"><span>1円</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="10"><span>10円</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="100"><span>100円</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="500"><span>500円</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="1000"><span>1000円</span></label>
+        </div>
+        <p class="field-hint center" id="unitHint"></p>
+      </details>
+
+      <details class="card opt" id="opt-excluded">
+        <summary>🧾 割り勘対象外: <span class="opt-state"></span></summary>
+        <div class="amount-input-group sub">
+          <label for="excludedAmount" id="excludedLabel">割り勘対象外</label>
+          <input type="number" id="excludedAmount" inputmode="numeric" placeholder="0" min="0" step="100" value="0">
+          <span class="currency">円</span>
+        </div>
+      </details>
+    </div>
+
     <button id="resetBtn" class="btn btn-link">入力をリセット</button>
 
-    <!-- 履歴 -->
-    <section class="card">
-      <h2>📋 履歴</h2>
+    <!-- 履歴とファイルへの書き出し -->
+    <details class="card opt" id="opt-history">
+      <summary>📋 履歴: <span class="opt-state"></span></summary>
       <div class="toggle-row">
         <label for="historyToggle">履歴を保存</label>
         <label class="toggle-switch">
@@ -177,7 +188,7 @@
       <button id="backupImport" class="btn btn-secondary">ファイルから読み込む</button>
       <input type="file" id="backupFile" accept=".json,application/json" hidden>
       <p id="backupMsg" class="field-hint" aria-live="polite"></p>
-    </section>
+    </details>
 
     <p class="guide-link">使い方・端数のルール・よくある質問は <a href="./guide.html">使い方ガイド</a> へ</p>
   </main>
@@ -199,6 +210,7 @@
     <!-- AD_PLACEHOLDER: 広告の位置を指定する場合はここに AdSense の広告ユニットを入れる（今は全ページの <head> のタグによる自動広告） -->
   </footer>
 
+  <script src="./screen.js"></script>
   <script src="./split.js"></script>
   <script src="./main.js"></script>
   <script>

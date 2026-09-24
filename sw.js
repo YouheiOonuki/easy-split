@@ -1,10 +1,11 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v7';
+const CACHE = 'easy-split-v8';
 const SHELL = [
   './',
   'index.html',
   'style.css',
   'split.js',
+  'screen.js',
   'main.js',
   'manifest.webmanifest',
   'favicon.svg',
