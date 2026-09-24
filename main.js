@@ -185,8 +185,24 @@
     try { return decodeShare(m[1]); } catch { return null; }
   }
 
-  function showNotice(text) {
+  // withNewLink: 共有リンクで来た人向けに「自分の割り勘を新しく始める」を添える
+  function showNotice(text, withNewLink) {
     sharedNotice.textContent = text;
+    if (withNewLink) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'shared-new';
+      btn.textContent = '自分の割り勘を新しく始める';
+      btn.addEventListener('click', () => {
+        if (!confirm('新しい割り勘を始めますか？（表示中の内容は、共有リンクからいつでも開き直せます）')) return;
+        state = defaultState();
+        applyStateToForm();
+        changed();
+        sharedNotice.classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      sharedNotice.append(document.createElement('br'), btn);
+    }
     sharedNotice.classList.remove('hidden');
   }
 
@@ -196,7 +212,7 @@
     if (!shared) return loadDraft();
     const hasDraft = lsGet(LS_DRAFT) !== null;
     if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は上書きされます）')) return loadDraft();
-    showNotice('共有された計算内容を表示しています');
+    showNotice('共有された計算内容を表示しています', true);
     return shared;
   }
 
