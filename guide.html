@@ -180,7 +180,7 @@
       <h2>ご利用上の注意・データの扱い</h2>
       <ul>
         <li>実際の支払い・集金の前に、合計金額がお会計と一致しているかなどを当事者間でご確認ください。</li>
-        <li>入力中の内容・計算履歴・名前の入力候補・設定は、この端末のブラウザ（localStorage、キー <code>easysplit_</code> で始まるもの）にだけ保存され、外部には送信されません。書き出し・読み込みと「入力をリセット」はこの画面のボタンから。</li>
+        <li>入力中の内容・計算履歴・名前の入力候補・設定は、この端末のブラウザ（localStorage、キー <code>easysplit_</code> で始まるもの）にだけ保存され、外部には送信されません。書き出し・読み込み・消去と「入力をリセット」は画面のボタンから。<br><button type="button" class="btn btn-secondary" data-reset-storage="easysplit_">保存した内容をすべて消す（初期状態に戻す）</button></li>
         <li>共有リンクには参加者名・金額・係数などの入力内容が含まれ、受け取った人や送信に使ったサービス（LINE など）がその内容を見られる状態になります。</li>
       </ul>
       <details>
@@ -215,6 +215,7 @@
     <!-- AD_PLACEHOLDER: 広告の位置を指定する場合はここに AdSense の広告ユニットを入れる（今は全ページの <head> のタグによる自動広告） -->
   </footer>
 
+  <script src="./reset-storage.js"></script>
   <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

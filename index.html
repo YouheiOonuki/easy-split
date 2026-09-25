@@ -186,6 +186,7 @@
       <button id="clearHistory" class="btn btn-secondary hidden">履歴をクリア</button>
       <button id="backupExport" class="btn btn-secondary">ファイルに書き出す</button>
       <button id="backupImport" class="btn btn-secondary">ファイルから読み込む</button>
+      <button type="button" class="btn btn-secondary" data-reset-storage="easysplit_">保存した内容をすべて消す（初期状態に戻す）</button>
       <input type="file" id="backupFile" accept=".json,application/json" hidden>
       <p id="backupMsg" class="field-hint" aria-live="polite"></p>
     </details>
@@ -212,6 +213,7 @@
 
   <script src="./screen.js"></script>
   <script src="./split.js"></script>
+  <script src="./reset-storage.js"></script>
   <script src="./main.js"></script>
   <script>
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
