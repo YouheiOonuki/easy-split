@@ -1,0 +1,98 @@
+/* 家計簿テンプレート（easy-split/kakeibo/）。新しいページなので端末のライト／ダークに合わせる（テーマの切り替えは持たない。サイト README 19）。見本と印刷は白い紙のまま */
+:root {
+  --bg: #f6f4ef;
+  --card: #ffffff;
+  --text: #2a2a2a;
+  --muted: #666;
+  --accent: #b23a48;
+  --accent-soft: #fbeaec;
+  --border: #d9d4ca;
+  --shadow: rgba(0, 0, 0, 0.08);
+  color-scheme: light dark;
+  font-family: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1b1f;
+    --card: #2a292e;
+    --text: #ebe8e2;
+    --muted: #b0aba3;
+    --accent: #ff8a97;
+    --accent-soft: #3a2a2d;
+    --border: #45434a;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+a { color: var(--accent); }
+.kb-header { text-align: center; padding: 16px 16px 4px; }
+.kb-header h1 { font-size: 1.25rem; margin: 0; color: var(--accent); }
+.sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+.kb-main { max-width: 760px; margin: 0 auto; padding: 8px 12px 24px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0; box-shadow: 0 1px 3px var(--shadow); }
+fieldset.card { min-width: 0; }
+.kb-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.kb-types label { position: relative; }
+.kb-types input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.kb-types span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 0.9rem; }
+.kb-types input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }
+.kb-types input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+.field { margin-bottom: 10px; }
+.field > label, .kb-pair label, .opt label { display: block; font-weight: 600; font-size: 0.9rem; }
+.opt label.inline { font-weight: 400; margin: 6px 0; }
+input[type="text"], input[type="number"], select {
+  display: block; width: 100%; max-width: 22rem; min-height: 44px; margin-top: 2px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit;
+}
+input[type="checkbox"] { width: 20px; height: 20px; vertical-align: -4px; margin-right: 6px; }
+.kb-pair { display: flex; flex-wrap: wrap; gap: 0 12px; }
+.kb-pair label { flex: 1 1 10rem; margin-bottom: 8px; }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 4px 0; }
+.result { font-weight: 700; margin: 6px 0 0; }
+.small { font-size: 0.85rem; }
+.btn { min-height: 48px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.btn-sub { min-height: 44px; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border); font-weight: 600; }
+.kb-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+details.opt > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.fixbar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 44px; background: var(--card); border-bottom: 2px solid var(--accent); box-shadow: 0 2px 8px var(--shadow); }
+.fixbar button { display: block; width: 100%; max-width: 480px; margin: 0 auto; height: 42px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.kb-footer { text-align: center; font-size: 0.8rem; color: var(--muted); padding: 12px; }
+.kb-footer ul { list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 14px; }
+.kb-footer a { display: inline-flex; min-height: 44px; align-items: center; }
+
+/* 見本（白い紙のまま。画面では縮めて見せる） */
+.sheet { background: #fff; color: #000; border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin: 10px 0; overflow-x: auto; color-scheme: light; }
+.sheet h2 { font-size: 1.05rem; margin: 0 0 6px; text-align: center; }
+.sheet .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 0.8rem; margin: 0 0 6px; }
+.sheet .blank { display: inline-block; min-width: 7em; border-bottom: 1px solid #000; text-align: right; }
+.sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.sheet th, .sheet td { border: 1px solid #555; padding: 1px 3px; height: 1.55em; overflow: hidden; white-space: nowrap; }
+.sheet thead th { background: #eee; font-weight: 700; text-align: center; }
+.sheet td.d, .sheet td.w { text-align: center; }
+.sheet tr.we td { background: #f2f2f2; }
+.sheet tr.sum th, .sheet tr.sum td { font-weight: 700; border-top: 2px solid #000; }
+.sheet .col-d { width: 2.2em; }
+.sheet .col-w { width: 1.8em; }
+.sheet .num { text-align: right; }
+.sheet .box { margin-top: 8px; font-size: 0.8rem; border: 1px solid #555; padding: 6px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+.sheet .box .line { display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px dotted #888; }
+.sheet .box .full { grid-column: 1 / -1; font-weight: 700; }
+.sheet .credit { text-align: right; font-size: 0.65rem; color: #333; margin: 6px 0 0; }
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: #fff; }
+  body > :not(main), main > :not(.sheet), ins.adsbygoogle, .google-auto-placed, iframe { display: none !important; }
+  .kb-main { max-width: none; padding: 0; }
+  .sheet { border: 0; padding: 0; margin: 0; overflow: visible; }
+  .sheet h2 { font-size: 14pt; }
+  .sheet .meta, .sheet .box { font-size: 9.5pt; }
+  .sheet table { font-size: 9pt; }
+  .sheet th, .sheet td { height: 7mm; padding: 0 1.5mm; }
+  .sheet.month th, .sheet.month td { height: 6.4mm; }
+  .sheet thead th, .sheet tr.we td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet .credit { font-size: 7.5pt; }
+}

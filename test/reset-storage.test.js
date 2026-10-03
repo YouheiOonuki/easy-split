@@ -9,7 +9,11 @@ const R = require('../reset-storage.js');
 const PREFIXES = ["easysplit_"];
 const LEGACY = [];
 // 画面ごとに消す範囲を分けるページ（1 つのリポジトリに別々の道具があるとき）。書いていないページは PREFIXES
-const PAGE_PREFIXES = {};
+const PAGE_PREFIXES = {
+  "kakeibo/index.html": [
+    "easysplit_kakeibo"
+  ]
+};
 const PAGE_LEGACY = {};
 // reset-storage.js を <script src> ではなく、ページの中に埋め込んでいるページ（1 ファイルにビルドするもの）
 const INLINE = [];

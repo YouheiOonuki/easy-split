@@ -60,6 +60,16 @@
 npm test   # node --test（依存パッケージなし）
 ```
 
+## 家計簿テンプレート（`/easy-split/kakeibo/`、2026-10-03 追加）
+
+企画は yorozu-plans の `docs/67_家計簿テンプレート.md`（ROADMAP K14）。印刷して手書きで使う表を作る（設定 → 出力。SCREEN 1.2）。
+
+- **月の家計簿**: 年と月を選ぶと 1〜末日と曜日（土日は薄い灰色）が入る。費目は読点で区切って 8 個まで（既定 6 個）。合計・予算・残りの行、収入・先月からの残り・貯金の欄。A4 縦 1 枚
+- **夫婦の共通費 精算表**: 負担の割合（折半・収入の比・割合を入れる）を表の上に。日付・内容・金額・払った人の行（10〜30 行）。「精算を計算する」に 2 人が払った合計を入れると、負担額と「誰が誰にいくら渡すか」を書き込む
+- **1 年の収支**: 1〜12 月 × 収入・支出・差・メモ
+- **計算**（`kakeibo/kakeibo-calc.js`）: 収入の比は 1% 単位で最大剰余法（合計 100）。按分は単位（1・10・100 円）で最大剰余法、単位に満たない端数は決めた人が持つ（合計はいつも一致。`test/kakeibo.test.js` で総当たり）
+- **保存**: `easysplit_kakeibo`（書き出し・読み込み・消すボタン。割り勘の画面とは別のキー）。新しいページなので見た目は端末のライト／ダークに合わせる（テーマ切り替えは持たない）。広告は自動広告、印刷では消す
+
 ## 技術構成
 
 - **HTML / CSS / JavaScript** のみ（フレームワーク・依存パッケージなし）
@@ -79,6 +89,7 @@ easy-split/
 ├── guide.html            # 使い方ガイド・よくある質問
 ├── guide-keisha.html     # 記事：傾斜割り勘の係数の決め方
 ├── guide-hasuu.html      # 記事：割り勘の端数処理のルール
+├── kakeibo/              # 家計簿テンプレート（index.html・guide.html・kakeibo-calc.js・kakeibo.js・kakeibo.css）
 ├── about.html            # yorozu-craft 共通の運営者情報（../about.html）へ移動する案内ページ
 ├── privacy-policy.html   # yorozu-craft 共通のプライバシーポリシー（../privacy-policy.html）へ移動する案内ページ
 ├── sw.js / manifest.webmanifest  # PWA（オフライン対応）
@@ -86,6 +97,7 @@ easy-split/
 ├── og-image.png          # SNS共有用画像（1200x630）
 ├── sitemap.xml           # サイトマップ
 ├── test/split.test.js    # 計算ロジックのテスト
+├── test/kakeibo.test.js  # 家計簿テンプレートのテスト
 └── test/backup.test.js   # ファイルへの書き出し・読み込みのテスト
 ```
 
