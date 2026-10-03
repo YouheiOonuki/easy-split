@@ -165,3 +165,6 @@ details.opt > summary { min-height: 44px; display: flex; align-items: center; cu
   .sheet thead th, .sheet tr.we td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sheet .credit { font-size: 7.5pt; }
 }
+
+/* 画面の見本だけ 12px 以上に（点検 2026-10-03 の tiny-text。印刷は 0.72rem のままで A4 1 枚を保つ） */
+@media screen { .sheet table { font-size: 0.75rem; } }
