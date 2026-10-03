@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家計簿テンプレート 印刷（無料）｜月を選んで日付入り・費目を自由に・夫婦の共通費 精算表</title>
+  <meta name="description" content="印刷して手書きで使う家計簿のテンプレートを作ります。月を選ぶと日付と曜日が入り、費目は自分で決められます。夫婦・カップルの共通費を収入の比や折半で分ける精算表、1 年の収支表も。A4 縦 1 枚、登録不要。">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://yorozu-craft.com/easy-split/kakeibo/">
+  <meta property="og:title" content="家計簿テンプレート 印刷（日付入り・夫婦の共通費 精算表）">
+  <meta property="og:description" content="月を選ぶと日付と曜日が入る手書き用の家計簿。費目は自由、夫婦の共通費を収入の比で分ける精算表も。A4 縦 1 枚。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yorozu-craft.com/easy-split/kakeibo/">
+  <meta property="og:image" content="https://yorozu-craft.com/easy-split/og-image.png">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:site_name" content="yorozu-craft">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "家計簿テンプレート（印刷）",
+    "url": "https://yorozu-craft.com/easy-split/kakeibo/",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "All",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+    "inLanguage": "ja"
+  }
+  </script>
+
+  <!-- Google AdSense（サイト所有確認 + 広告配信スクリプト） -->
+  <meta name="google-adsense-account" content="ca-pub-5375267956079717">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5375267956079717"
+     crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="./kakeibo.css">
+</head>
+<body>
+  <!-- 上端の固定バー（SCREEN.md 1.2。印刷物は主なボタンを固定する） -->
+  <div class="fixbar" id="fixbar" role="status" hidden>
+    <button type="button" id="fixbar-print"><span id="fixbar-text"></span></button>
+  </div>
+
+  <header class="kb-header">
+    <h1>家計簿テンプレート（印刷・夫婦の共通費）</h1>
+    <p class="sub">月を選ぶと日付入りの家計簿を作ります。入力は外部に送信しません。</p>
+  </header>
+
+  <main class="kb-main">
+    <fieldset class="card kb-controls">
+      <legend class="sr">作る表と設定</legend>
+      <div class="kb-types" role="radiogroup" aria-label="表の種類">
+        <label><input type="radio" name="type" value="month" checked><span>月の家計簿</span></label>
+        <label><input type="radio" name="type" value="shared"><span>夫婦の共通費 精算表</span></label>
+        <label><input type="radio" name="type" value="year"><span>1 年の収支</span></label>
+      </div>
+      <div class="field"><label for="ym">年と月</label><select id="ym"></select></div>
+      <div class="field" id="f-cats"><label for="cats">費目（読点で区切る。8 個まで）</label><input type="text" id="cats" maxlength="120"></div>
+      <div class="field" id="f-method" hidden>
+        <label for="method">負担の割合</label>
+        <select id="method">
+          <option value="half">折半（50%・50%）</option>
+          <option value="income">収入の比で分ける</option>
+          <option value="percent">割合を入れる</option>
+        </select>
+        <div class="kb-pair" id="f-income" hidden>
+          <label><span id="lbl-incA">A</span> の収入（月）<input type="number" id="incomeA" min="0" inputmode="numeric" placeholder="例：300000"></label>
+          <label><span id="lbl-incB">B</span> の収入（月）<input type="number" id="incomeB" min="0" inputmode="numeric" placeholder="例：200000"></label>
+        </div>
+        <div class="kb-pair" id="f-percent" hidden>
+          <label><span id="lbl-pctA">A</span> の割合（%）<input type="number" id="percentA" min="0" max="100" inputmode="numeric" placeholder="例：60"></label>
+        </div>
+        <p class="hint" id="ratio-out" aria-live="polite"></p>
+      </div>
+      <p><button type="button" class="btn" id="print">印刷する（A4 縦 1 枚）</button></p>
+    </fieldset>
+
+    <section class="sheet" id="sheet" aria-label="印刷される表"></section>
+
+    <details class="card opt" id="opt-shared">
+      <summary>精算を計算する: <span class="opt-state">入力なし</span></summary>
+      <p class="hint">月末に、2 人が共通費として払った額を入れると、精算の額を表に書き込みます。</p>
+      <div class="kb-pair">
+        <label><span id="lbl-paidA">A</span> が払った合計<input type="number" id="paidA" min="0" inputmode="numeric" placeholder="例：84000"></label>
+        <label><span id="lbl-paidB">B</span> が払った合計<input type="number" id="paidB" min="0" inputmode="numeric" placeholder="例：36000"></label>
+      </div>
+      <p class="result" id="settle-out" aria-live="polite"></p>
+    </details>
+
+    <details class="card opt" id="opt-more">
+      <summary>くわしい設定: <span class="opt-state">A・B</span></summary>
+      <div class="kb-pair">
+        <label>1 人目の呼び名<input type="text" id="nameA" maxlength="8"></label>
+        <label>2 人目の呼び名<input type="text" id="nameB" maxlength="8"></label>
+      </div>
+      <div class="kb-pair">
+        <label>分けるときの単位<select id="unit"><option value="1">1 円</option><option value="10">10 円</option><option value="100">100 円</option></select></label>
+        <label>単位に満たない端数を持つ人<select id="holder"><option value="0">1 人目</option><option value="1">2 人目</option></select></label>
+      </div>
+      <label class="inline"><input type="checkbox" id="budget" checked> 月の家計簿に「予算」と「残り」の行を入れる</label>
+      <label>精算表の行の数 <select id="rows"><option>10</option><option>15</option><option selected>20</option><option>25</option><option>30</option></select></label>
+      <label class="inline"><input type="checkbox" id="credit" checked> 下に「yorozu-craft.com/easy-split/kakeibo/ で作成」と小さく入れる</label>
+    </details>
+
+    <details class="card opt">
+      <summary>入力の保存・書き出し</summary>
+      <p class="hint">入力内容はこの端末のブラウザ（localStorage、キー <code>easysplit_kakeibo</code>）にだけ保存され、外部には送信されません。書き出し・読み込み・消去はこの画面のボタンから。</p>
+      <p class="kb-btns">
+        <button type="button" class="btn btn-sub" id="export">ファイルに書き出す</button>
+        <button type="button" class="btn btn-sub" id="import">ファイルから読み込む</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <button type="button" class="btn btn-sub" data-reset-storage="easysplit_kakeibo">保存した内容をすべて消す（初期状態に戻す）</button>
+      </p>
+      <p class="hint" id="save-msg" aria-live="polite"></p>
+    </details>
+
+    <p class="small">飲み会の割り勘は <a href="../">割り勘・傾斜清算</a>へ。<a href="./guide.html">使い方・よくある質問</a>・<a href="../../print-help.html">スマホで印刷するには</a></p>
+  </main>
+
+  <footer class="kb-footer">
+    <nav aria-label="フッターナビゲーション">
+      <ul>
+        <li><a href="../../">yorozu-craft トップ</a></li>
+        <li><a href="./guide.html">家計簿テンプレートの使い方</a></li>
+        <li><a href="../">割り勘・傾斜清算</a></li>
+        <li><a href="../../about.html">運営者情報</a></li>
+        <li><a href="../../privacy-policy.html">プライバシーポリシー</a></li>
+      </ul>
+    </nav>
+    <p>&copy; 2026 yorozu-craft. All rights reserved.</p>
+  </footer>
+
+  <script src="../screen.js"></script>
+  <script src="../reset-storage.js"></script>
+  <script src="./kakeibo-calc.js"></script>
+  <script src="./kakeibo.js"></script>
+  <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

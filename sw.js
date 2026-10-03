@@ -1,5 +1,5 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v10';
+const CACHE = 'easy-split-v11';
 const SHELL = [
   './',
   'index.html',
@@ -13,7 +13,14 @@ const SHELL = [
   'icon-192.png',
   'guide.html',
   'guide-keisha.html',
-  'guide-hasuu.html'
+  'guide-hasuu.html',
+  // 家計簿テンプレート（/easy-split/kakeibo/）
+  'kakeibo/',
+  'kakeibo/index.html',
+  'kakeibo/kakeibo.css',
+  'kakeibo/kakeibo-calc.js',
+  'kakeibo/kakeibo.js',
+  'kakeibo/guide.html'
   // 運営者情報・プライバシーポリシーは yorozu-craft 共通ページ（../about.html 等）に移したのでキャッシュしない
 ];
 

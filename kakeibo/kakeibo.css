@@ -1,0 +1,167 @@
+/* 家計簿テンプレート（easy-split/kakeibo/）。新しいページなので端末のライト／ダークに合わせる（テーマの切り替えは持たない。サイト README 19）。見本と印刷は白い紙のまま
+   色・字・フォーカスの輪は下の yorozu-common（../style.css と同じ写し。束 A）。このページだけの上書きは end の後 */
+/* yorozu-common:begin v1 — サイト共通の部品とトークン。正本は youheioonuki.github.io の tools/common/yorozu-common.css。
+   この begin〜end の間は手で直さない（tools/sync-common.mjs で全ツールに配る。ツール固有の上書きは end の後に書く）。
+   出どころ（2026-10-03 確認。yorozu-plans 企画書 59）:
+   - デジタル庁デザインシステム https://design.digital.go.jp/dads/ のコンテンツを加工して作成
+     （フォーカスの輪・リンクの下線・字の大きさの下限・行間・入力欄のエラー表示）。
+     トークンの値は @digital-go-jp/design-tokens 2.0.1（MIT, (c) 2023 デジタル庁）から
+   - GOV.UK Frontend 6.5.1（MIT, (c) Crown copyright）の考え方: visually-hidden、エラーの文の前に読み上げ用の語
+   - 色は和紙風のまま（値は 2026-09-23 からの共通の値）。Web フォントは読まない（ROADMAP 3.3・D2） */
+:root {
+  color-scheme: light dark;
+  --bg: #f0ebe0;
+  --bg-2: #e6dfd0;
+  --card: #faf6ee;
+  --text: #3a3025;
+  --muted: #6e604f;          /* 本文の補足。--bg の上で 5.1:1 */
+  --accent: #8b4513;
+  --accent-soft: #f3e6d8;
+  --border: #cfc0a0;         /* 飾りの線（区切り）だけ。操作できる物の枠には --input-border */
+  --input-border: #857561;   /* 入力欄の枠。WCAG 1.4.11 の 3:1（--bg で 3.7:1）。DADS の入力欄は gray-600 の 1px */
+  --shadow: rgba(58, 48, 37, 0.12);
+  --error: #ce0000;          /* DADS red-900（semantic error-2） */
+  --ok: #197a4b;             /* DADS green-800（semantic success-2） */
+  --focus: #ffd43d;          /* DADS yellow-300 */
+  --focus-ring: #000;        /* DADS: 黒 4px の輪＋黄 2px */
+  --font-ui: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  /* 字の大きさ（DADS: 本文と操作は 16px 以上、補足は 14px まで、14px 未満は使わない） */
+  --fs-s: 0.875rem;
+  --fs-m: 1rem;
+  --fs-l: 1.25rem;           /* 見出し（隣の段との比 1.25 以上: impeccable typeset） */
+  --fs-xl: 1.625rem;         /* ページの題 */
+  --lh-body: 1.7;            /* DADS の本文の行間 170% */
+  --lh-tight: 1.4;           /* 見出し */
+  /* 余白（4px を基準。DADS の spacing） */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --radius: 8px;
+  --tap: 44px;               /* 押せる物の高さの下限（DADS・SCREEN 5 章） */
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1814;
+    --bg-2: #25201a;
+    --card: #2b251e;
+    --text: #ece4d6;
+    --muted: #b9ab96;
+    --accent: #e0a066;
+    --accent-soft: #3a2e22;
+    --border: #4a3f33;
+    --input-border: #8c7d68;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --error: #ff8a7a;
+    --ok: #6fcf97;
+    --focus-ring: #ffd43d;   /* 暗い地では黄の輪＋黒の縁 */
+    --focus: #000;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-family: var(--font-ui); background: var(--bg); color: var(--text); line-height: var(--lh-body); }
+/* リンクは色と下線の両方（DADS リンクテキスト）。ホバーで下線を太く */
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+@media (hover: hover) { a:hover { text-decoration-thickness: 3px; } }
+/* フォーカスの輪（DADS）。:where で詳しさを 0 にして、ツールの規則で上書きできるようにする */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 4px solid var(--focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--focus);
+}
+:where(input, select, textarea, button) { font: inherit; color: inherit; }
+/* 入力欄の例（placeholder）も 4.5:1。ブラウザ既定の灰色は和紙の地で 4.3:1 */
+:where(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
+/* 入力欄の字は 16px 以上（iPhone で拡大されない・DADS） */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) { font-size: max(1rem, 16px); }
+/* エラー（DADS: 枠を赤に、文の頭に「＊」。GOV.UK: 読み上げには「エラー:」を先に）。
+   使い方: <p class="field-error" id="x-err"><span class="visually-hidden">エラー:</span>＊ 0 以上の数を入れてください</p> と aria-describedby */
+[aria-invalid="true"] { border-color: var(--error) !important; }
+.field-error { color: var(--error); font-weight: 700; margin-top: var(--sp-1); }
+/* 画面には出さず、読み上げだけ（GOV.UK govuk-visually-hidden） */
+.visually-hidden {
+  position: absolute !important; width: 1px !important; height: 1px !important; margin: 0 !important; padding: 0 !important;
+  overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important;
+}
+@media (forced-colors: active) { :where(a, button, input, select, textarea, summary):focus-visible { outline-color: Highlight; } }
+/* 読む行の長さ: 1 行 40 字前後まで（REVIEW C9 line-length）。画面の幅いっぱいに伸びる見出し帯の説明文に */
+.app-header > p { max-width: 40em; margin-left: auto; margin-right: auto; }
+/* 印刷では広告を出さない（SCREEN 4 章。全ツール共通） */
+@media print { ins.adsbygoogle, .google-auto-placed, iframe[id^="aswift"], iframe[id^="google_ads"] { display: none !important; } }
+/* yorozu-common:end */
+:root { font-family: var(--font-ui); }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+a { color: var(--accent); }
+.kb-header { text-align: center; padding: 16px 16px 4px; }
+.kb-header h1 { font-size: 1.25rem; margin: 0; color: var(--accent); }
+.sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+.kb-main { max-width: 760px; margin: 0 auto; padding: 8px 12px 24px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0; box-shadow: 0 1px 3px var(--shadow); }
+fieldset.card { min-width: 0; }
+.kb-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.kb-types label { position: relative; }
+.kb-types input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.kb-types span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 0.9rem; }
+.kb-types input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }
+.kb-types input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
+.field { margin-bottom: 10px; }
+.field > label, .kb-pair label, .opt label { display: block; font-weight: 600; font-size: 0.9rem; }
+.opt label.inline { font-weight: 400; margin: 6px 0; }
+input[type="text"], input[type="number"], select {
+  display: block; width: 100%; max-width: 22rem; min-height: 44px; margin-top: 2px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit;
+}
+input[type="checkbox"] { width: 20px; height: 20px; vertical-align: -4px; margin-right: 6px; }
+.kb-pair { display: flex; flex-wrap: wrap; gap: 0 12px; }
+.kb-pair label { flex: 1 1 10rem; margin-bottom: 8px; }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 4px 0; }
+.result { font-weight: 700; margin: 6px 0 0; }
+.small { font-size: 0.85rem; }
+.btn { min-height: 48px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.btn-sub { min-height: 44px; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border); font-weight: 600; }
+.kb-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+details.opt > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.fixbar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 44px; background: var(--card); border-bottom: 2px solid var(--accent); box-shadow: 0 2px 8px var(--shadow); }
+.fixbar button { display: block; width: 100%; max-width: 480px; margin: 0 auto; height: 42px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.kb-footer { text-align: center; font-size: 0.8rem; color: var(--muted); padding: 12px; }
+.kb-footer ul { list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 14px; }
+.kb-footer a { display: inline-flex; min-height: 44px; align-items: center; }
+
+/* 見本（白い紙のまま。画面では縮めて見せる） */
+.sheet { background: #fff; color: #000; border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin: 10px 0; overflow-x: auto; color-scheme: light; }
+.sheet h2 { font-size: 1.05rem; margin: 0 0 6px; text-align: center; }
+.sheet .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; font-size: 0.8rem; margin: 0 0 6px; }
+.sheet .blank { display: inline-block; min-width: 7em; border-bottom: 1px solid #000; text-align: right; }
+.sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.sheet th, .sheet td { border: 1px solid #555; padding: 1px 3px; height: 1.55em; overflow: hidden; white-space: nowrap; }
+.sheet thead th { background: #eee; font-weight: 700; text-align: center; }
+.sheet td.d, .sheet td.w { text-align: center; }
+.sheet tr.we td { background: #f2f2f2; }
+.sheet tr.sum th, .sheet tr.sum td { font-weight: 700; border-top: 2px solid #000; }
+.sheet .col-d { width: 2.2em; }
+.sheet .col-w { width: 1.8em; }
+.sheet .num { text-align: right; }
+.sheet .box { margin-top: 8px; font-size: 0.8rem; border: 1px solid #555; padding: 6px 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+.sheet .box .line { display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px dotted #888; }
+.sheet .box .full { grid-column: 1 / -1; font-weight: 700; }
+.sheet .credit { text-align: right; font-size: 0.65rem; color: #333; margin: 6px 0 0; }
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  body { background: #fff; }
+  body > :not(main), main > :not(.sheet), ins.adsbygoogle, .google-auto-placed, iframe { display: none !important; }
+  .kb-main { max-width: none; padding: 0; }
+  .sheet { border: 0; padding: 0; margin: 0; overflow: visible; }
+  .sheet h2 { font-size: 14pt; }
+  .sheet .meta, .sheet .box { font-size: 9.5pt; }
+  .sheet table { font-size: 9pt; }
+  .sheet th, .sheet td { height: 7mm; padding: 0 1.5mm; }
+  .sheet.month th, .sheet.month td { height: 6.4mm; }
+  .sheet thead th, .sheet tr.we td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet .credit { font-size: 7.5pt; }
+}
