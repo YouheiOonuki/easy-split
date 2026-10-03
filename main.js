@@ -398,7 +398,7 @@
 
   // ---- Theme ----
   function loadTheme() {
-    setTheme(lsGet(LS_THEME) || 'dark');
+    setTheme(lsGet(LS_THEME) || 'washi');   // 既定は和紙（共通テンプレート。束 A）
   }
 
   function setTheme(theme) {
