@@ -86,7 +86,9 @@ test('ページの決まり: 保存キー easysplit_kakeibo・消すボタン・
   const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
   const html = read('kakeibo/index.html');
   assert.ok(html.includes('data-reset-storage="easysplit_kakeibo"'));
-  assert.ok(html.includes('adsbygoogle.js'));
+  // AdSense 審査中（2026-10-04）は本文の薄いページなので広告 script を外し、所有確認の meta だけ
+  assert.ok(!html.includes('adsbygoogle.js'));
+  assert.equal((html.match(/name="google-adsense-account"/g) || []).length, 1);
   assert.ok(html.includes('<link rel="canonical" href="https://yorozu-craft.com/easy-split/kakeibo/">'));
   assert.match(read('kakeibo/kakeibo.js'), /const KEY = 'easysplit_kakeibo';/);
   assert.ok(read('sitemap.xml').includes('https://yorozu-craft.com/easy-split/kakeibo/'));
