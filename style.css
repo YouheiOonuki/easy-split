@@ -1384,3 +1384,22 @@ details.card.opt.about-tool > summary { white-space: normal; }   /* 長い summa
 details.about-tool h3 { font-size: 0.95rem; margin: 0.9rem 0 0.3rem; }
 details.about-tool p, details.about-tool li { font-size: 0.9rem; line-height: 1.75; }
 details.about-tool ul { padding-left: 1.2rem; margin: 0.3rem 0 0.5rem; }
+
+/* スマホ版（quick/。yorozu-plans ROADMAP 7.41.3 K176）: 縦 1 画面（390×844）に収める */
+.quick-main { max-width: 420px; margin: 0 auto; padding: 10px 16px 12px; }
+.quick-title { font-size: 1.15rem; margin: 0 0 6px; }
+.quick-label { font-size: 0.85rem; opacity: 0.8; }
+.quick-total { font-size: 1.7rem; margin: 0 0 6px; }
+.quick-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+.quick-count { font-size: 1.3rem; min-width: 3.5em; text-align: center; }
+.quick-unit label { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
+.quick-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; }
+.qkey { font: inherit; font-size: 1.4rem; min-height: 52px; border-radius: 10px; border: 1px solid currentColor; background: transparent; color: inherit; }
+.qkey-sub { font-size: 1.1rem; opacity: 0.8; }
+.quick-result { text-align: center; margin-top: 6px; }
+.quick-result .quick-label { margin: 0; }
+.quick-each { font-size: 2.6rem; font-weight: 800; margin: 0; }
+.quick-org { margin: 0 0 6px; min-height: 1.4em; }
+.quick-foot { font-size: 0.8rem; opacity: 0.8; margin-top: 8px; }
+.quick-link { text-align: center; margin: 0 0 8px; }
+.quick-link a { display: inline-block; min-height: 44px; line-height: 44px; }
