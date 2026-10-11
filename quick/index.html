@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="washi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>割り勘（スマホ版）｜合計と人数だけで 1 人いくら｜easy-split</title>
+  <meta name="description" content="飲み会の割り勘を、スマホの縦 1 画面で。合計と人数を入れると 1 人あたりと幹事の端数が出て、そのまま LINE で送れます。名前は入れません。">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://yorozu-craft.com/easy-split/quick/">
+  <meta property="og:title" content="割り勘（スマホ版）｜easy-split">
+  <meta property="og:description" content="合計と人数だけで 1 人いくら。結果は LINE で送れます。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yorozu-craft.com/easy-split/quick/">
+  <meta property="og:image" content="https://yorozu-craft.com/easy-split/og-image.png">
+  <meta property="og:site_name" content="yorozu-craft">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="google-adsense-account" content="ca-pub-5375267956079717">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="quick">
+  <main class="quick-main">
+    <h1 class="quick-title">割り勘（スマホ版）</h1>
+    <p class="quick-total" aria-live="polite"><span class="quick-label">合計</span> <strong id="qTotal">0 円</strong></p>
+    <div class="quick-row">
+      <span class="quick-label">人数</span>
+      <button type="button" id="qMinus" class="stepper-btn" aria-label="1人減らす">−</button>
+      <strong id="qCount" class="quick-count" aria-live="polite">4 人</strong>
+      <button type="button" id="qPlus" class="stepper-btn" aria-label="1人増やす">＋</button>
+    </div>
+    <div class="quick-row quick-unit" role="radiogroup" aria-label="端数の丸め">
+      <span class="quick-label">丸め</span>
+      <label><input type="radio" name="qunit" value="100" checked> 100 円</label>
+      <label><input type="radio" name="qunit" value="10"> 10 円</label>
+    </div>
+    <div class="quick-keys">
+      <button type="button" class="qkey" data-k="1">1</button><button type="button" class="qkey" data-k="2">2</button><button type="button" class="qkey" data-k="3">3</button>
+      <button type="button" class="qkey" data-k="4">4</button><button type="button" class="qkey" data-k="5">5</button><button type="button" class="qkey" data-k="6">6</button>
+      <button type="button" class="qkey" data-k="7">7</button><button type="button" class="qkey" data-k="8">8</button><button type="button" class="qkey" data-k="9">9</button>
+      <button type="button" class="qkey qkey-sub" data-k="clr" aria-label="消す">C</button><button type="button" class="qkey" data-k="0">0</button><button type="button" class="qkey qkey-sub" data-k="del" aria-label="1 けた消す">⌫</button>
+    </div>
+    <section class="quick-result" aria-live="polite">
+      <p class="quick-label">1 人あたり</p>
+      <p id="qEach" class="quick-each">—</p>
+      <p id="qOrg" class="quick-org"></p>
+      <button type="button" id="qSend" class="btn btn-line" disabled>LINE で送る</button>
+    </section>
+    <p class="quick-foot">名前は入れません。入れた数はこの画面の中だけで、保存しません。傾斜・2 次会・固定額は<a href="../">いつもの版</a>で。</p>
+  </main>
+  <script src="../split.js"></script>
+  <script src="./quick.js"></script>
+  <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
