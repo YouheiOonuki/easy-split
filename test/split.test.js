@@ -152,3 +152,10 @@ test('multi fuzz: grand total always matches', () => {
 test('allocate distributes by largest remainder', () => {
   assert.deepEqual(allocate(1000, [1, 1, 1], 100), { amounts: [400, 300, 300], remainder: 0 });
 });
+
+test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で返さない）。オフラインのときだけキャッシュ', () => {
+  const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
+  assert.match(sw, /event\.respondWith\(networkFirst\(req, fromNetwork\)\)/);
+  assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
+  assert.match(sw, /const CACHE = 'easy-split-v13';/);
+});
