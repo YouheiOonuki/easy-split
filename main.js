@@ -13,7 +13,6 @@
   const removeBillBtn = $('removeBill');
   const attendeeBox = $('attendeeBox');
   const attendeeList = $('attendeeList');
-  const billHint = $('billHint');
   const totalAmountInput = $('totalAmount');
   const excludedAmountInput = $('excludedAmount');
   const participantsList = $('participantsList');
@@ -328,7 +327,6 @@
     billNameInput.value = b.name;
     billNameRow.classList.toggle('hidden', !multi());
     attendeeBox.classList.toggle('hidden', !multi());
-    billHint.classList.toggle('hidden', multi());
     renderAttendees();
     updateSummaries();
   }

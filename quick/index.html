@@ -24,7 +24,7 @@
 <body class="quick">
   <main class="quick-main">
     <h1 class="quick-title">割り勘（スマホ版）</h1>
-    <p class="quick-total" aria-live="polite"><span class="quick-label">合計</span> <strong id="qTotal">0 円</strong></p>
+    <output class="quick-total" aria-live="polite"><span class="quick-label">合計</span> <strong id="qTotal">0 円</strong></output>
     <div class="quick-row">
       <span class="quick-label">人数</span>
       <button type="button" id="qMinus" class="stepper-btn" aria-label="1人減らす">−</button>
@@ -43,7 +43,7 @@
       <button type="button" class="qkey qkey-sub" data-k="clr" aria-label="消す">C</button><button type="button" class="qkey" data-k="0">0</button><button type="button" class="qkey qkey-sub" data-k="del" aria-label="1 けた消す">⌫</button>
     </div>
     <section class="quick-result" aria-live="polite">
-      <p class="quick-label">1 人あたり</p>
+      <h2 class="quick-label">1 人あたり</h2>
       <p id="qEach" class="quick-each">—</p>
       <p id="qOrg" class="quick-org"></p>
       <button type="button" id="qSend" class="btn btn-line" disabled>LINE で送る</button>

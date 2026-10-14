@@ -98,10 +98,9 @@
         <span class="currency">円</span>
       </div>
       <div id="attendeeBox" class="hidden">
-        <p class="field-hint">この会計に参加した人（タップで切り替え）</p>
-        <div id="attendeeList" class="preset-row"></div>
+        <h3 class="field-hint" id="attendeeHead">この会計に参加した人</h3>
+        <div id="attendeeList" class="preset-row" role="group" aria-labelledby="attendeeHead"></div>
       </div>
-      <p id="billHint" class="field-hint">2次会がある場合は「＋ 会計を追加」。参加した人だけで割ります</p>
       <div class="card-head people-head">
         <span class="people-label" id="peopleLabel">👥 参加者</span>
         <div class="stepper" role="group" aria-labelledby="peopleLabel">
@@ -126,8 +125,7 @@
           <button id="shareBtn" class="btn btn-copy hidden">📤 共有</button>
           <button id="copyBtn" class="btn btn-copy">📋 コピー</button>
         </div>
-        <p class="field-hint center">送った・コピーした結果は履歴に保存されます</p>
-        <p class="field-hint center next-link">順番や罰ゲームを決めるなら → <a href="../web-roulette/">ルーレット</a></p>
+        <p class="field-hint center next-link"><a href="../web-roulette/">順番や罰ゲームはルーレットで</a></p>
       </div>
     </section>
 
@@ -211,7 +209,7 @@
       <p>係数の目安は<a href="./guide-keisha.html">傾斜割り勘の係数の決め方</a>、端数のルールは<a href="./guide-hasuu.html">割り勘の端数処理のルール</a>、全体は<a href="./guide.html">使い方ガイド</a>に。</p>
     </details>
     <!-- /about-tool -->
-    <p class="guide-link">使い方・端数のルール・よくある質問は <a href="./guide.html">使い方ガイド</a> へ</p>
+    <p class="guide-link"><a href="./guide.html">使い方・端数のルール・よくある質問</a></p>
   </main>
 
   <footer class="app-footer">
