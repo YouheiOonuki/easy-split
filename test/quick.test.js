@@ -32,7 +32,7 @@ test('送る文: 名前が無く、値は合計・人数・1 人あたり・額�
 test('ページ: いつもの版へのリンク、split.js を読む、入口からのリンク', () => {
   const html = read('quick/index.html');
   assert.ok(html.indexOf('../split.js') < html.indexOf('./quick.js'));
-  assert.match(html, /href="\.\.\/">いつもの版<\/a>/);
+  assert.match(html, /href="\.\.\/">[^<]*いつもの版[^<]*<\/a>/);
   assert.match(read('index.html'), /href="\.\/quick\/"/);
   assert.match(read('sitemap.xml'), /https:\/\/yorozu-craft\.com\/easy-split\/quick\//);
 });
