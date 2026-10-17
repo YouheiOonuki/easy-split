@@ -1207,7 +1207,7 @@ button.result-item {
   border-left: 3px solid var(--accent);
 }
 
-.guide-step h3 {
+.guide-step h2 {
   margin-top: 0;
   color: var(--accent);
 }
