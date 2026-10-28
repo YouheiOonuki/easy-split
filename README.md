@@ -74,7 +74,7 @@ npm test   # node --test（依存パッケージなし）
 
 - **HTML / CSS / JavaScript** のみ（フレームワーク・依存パッケージなし）
 - **データ保存**: localStorage のみ（サーバー通信なし）
-- **テーマ**: CSS 変数 + `data-theme` 属性（`<head>` 内で先に適用し、読み込み時のちらつきを防止）
+- **テーマ**: 切り替えは持たない。共通の皮（yorozu-common v2）が端末のライト/ダークに合わせる
 - **CI**: GitHub Actions（`.github/workflows/test.yml`）で push のたびに `npm test` を実行
 
 ## ファイル構成

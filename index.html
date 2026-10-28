@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-theme="washi">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,8 @@
   <meta name="author" content="yorozu-craft">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yorozu-craft.com/easy-split/">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#eef0f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
 
   <!-- OGP -->
   <meta property="og:title" content="easy-split｜傾斜割り勘・飲み会の清算アプリ">
@@ -50,10 +51,6 @@
   }
   </script>
 
-  <!-- Apply the saved theme before first paint to avoid a flash -->
-  <script>
-    try { var t = localStorage.getItem('easysplit_theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
-  </script>
 
   <!-- Google AdSense: サイト所有確認の meta だけ。AdSense 審査が通るまで本文の薄いページは広告 script を外す（2026-10-04）。通ったら本文を足してから戻す -->
   <meta name="google-adsense-account" content="ca-pub-5375267956079717">
@@ -62,20 +59,14 @@
 </head>
 <body>
   <!-- 上端の固定バー（yorozu-plans の SCREEN.md 1.1・D59）。結果が画面の外にあるときだけ screen.js が出す。読み込み時は hidden -->
-  <div class="fixbar" id="fixbar" role="status" hidden>
+  <div class="fixed-bar" id="fixbar" role="status" hidden>
     <a href="#resultSection"><span id="fixbar-text"></span> ▸ 結果へ</a>
   </div>
 
   <!-- Header -->
   <header class="app-header">
-    <h1 class="app-title">easy-split</h1>
+    <h1>easy-split</h1>
     <p class="app-subtitle">傾斜割り勘・飲み会の清算アプリ</p>
-    <div class="theme-switcher" role="group" aria-label="テーマ">
-      <button class="theme-btn" data-theme="washi" title="Washi" aria-label="和紙テーマ（端末の設定で明るさが変わる）">📜</button>
-      <button class="theme-btn" data-theme="dark" title="Dark" aria-label="ダークテーマ">🌙</button>
-      <button class="theme-btn" data-theme="simple" title="Simple" aria-label="シンプルテーマ">☀️</button>
-      <button class="theme-btn" data-theme="metal" title="Metal" aria-label="メタルテーマ">⚙️</button>
-    </div>
   </header>
 
   <!-- スマホ版への入口（yorozu-plans ROADMAP 7.41.3 K176） -->
@@ -114,13 +105,13 @@
     <!-- 結果（入力に合わせて自動計算） -->
     <section id="resultSection" class="card result-card" tabindex="-1" aria-labelledby="h-result">
       <h2 id="h-result">📊 計算結果</h2>
-      <p id="formError" class="form-error hidden" role="alert"></p>
+      <p id="formError" class="field-error hidden" role="alert"></p>
       <div id="resultBody">
         <div id="resultList"></div>
         <p id="resultNote" class="field-hint"></p>
         <div id="resultTotal" class="result-total"></div>
         <p id="collectSummary" class="collect-summary" aria-live="polite"></p>
-        <button id="lineBtn" class="btn btn-line">LINEで送る</button>
+        <button id="lineBtn" class="btn-primary btn-line">LINEで送る</button>
         <div class="share-actions">
           <button id="shareBtn" class="btn btn-copy hidden">📤 共有</button>
           <button id="copyBtn" class="btn btn-copy">📋 コピー</button>

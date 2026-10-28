@@ -39,7 +39,7 @@
 </head>
 <body>
   <!-- 上端の固定バー（SCREEN.md 1.2。印刷物は主なボタンを固定する） -->
-  <div class="fixbar" id="fixbar" role="status" hidden>
+  <div class="fixed-bar" id="fixbar" role="status" hidden>
     <button type="button" id="fixbar-print"><span id="fixbar-text"></span></button>
   </div>
 
@@ -50,7 +50,7 @@
 
   <main class="kb-main">
     <fieldset class="card kb-controls">
-      <legend class="sr">作る表と設定</legend>
+      <legend class="visually-hidden">作る表と設定</legend>
       <div class="kb-types" role="radiogroup" aria-label="表の種類">
         <label><input type="radio" name="type" value="month" checked><span>月の家計簿</span></label>
         <label><input type="radio" name="type" value="shared"><span>夫婦の共通費 精算表</span></label>
@@ -74,7 +74,7 @@
         </div>
         <p class="hint" id="ratio-out" aria-live="polite"></p>
       </div>
-      <p><button type="button" class="btn" id="print">印刷する（A4 縦 1 枚）</button></p>
+      <p><button type="button" class="btn-primary" id="print">印刷する（A4 縦 1 枚）</button></p>
     </fieldset>
 
     <section class="sheet" id="sheet" aria-label="印刷される表"></section>
@@ -108,10 +108,10 @@
       <summary>入力の保存・書き出し</summary>
       <p class="hint">入力内容はこの端末のブラウザ（localStorage、キー <code>easysplit_kakeibo</code>）にだけ保存され、外部には送信されません。書き出し・読み込み・消去はこの画面のボタンから。</p>
       <p class="kb-btns">
-        <button type="button" class="btn btn-sub" id="export">ファイルに書き出す</button>
-        <button type="button" class="btn btn-sub" id="import">ファイルから読み込む</button>
+        <button type="button" class="btn" id="export">ファイルに書き出す</button>
+        <button type="button" class="btn" id="import">ファイルから読み込む</button>
         <input type="file" id="import-file" accept="application/json,.json" hidden>
-        <button type="button" class="btn btn-sub" data-reset-storage="easysplit_kakeibo">保存した内容をすべて消す（初期状態に戻す）</button>
+        <button type="button" class="btn" data-reset-storage="easysplit_kakeibo">保存した内容をすべて消す（初期状態に戻す）</button>
       </p>
       <p class="hint" id="save-msg" aria-live="polite"></p>
     </details>
