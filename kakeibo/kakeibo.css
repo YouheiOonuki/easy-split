@@ -1,5 +1,5 @@
-/* 家計簿テンプレート（easy-split/kakeibo/）。新しいページなので端末のライト／ダークに合わせる（テーマの切り替えは持たない。サイト README 19）。見本と印刷は白い紙のまま
-   色・字・フォーカスの輪は下の yorozu-common（../style.css と同じ写し。束 A）。このページだけの上書きは end の後 */
+/* 家計簿テンプレート（easy-split/kakeibo/）。yorozu-common v2 の皮に載せる（../style.css と同じ写し）。端末のライト／ダークに合わせる（テーマの切り替えは持たない）。見本と印刷は白い紙のまま
+   色・字・角・線はトークン（--bg / --card / --text / --muted / --accent / --border / --radius / --sp-* / --fs-*）だけ。このページだけの上書きは end の後 */
 /* yorozu-common:begin v2 — サイト共通の土台と皮。正本は youheioonuki.github.io の tools/common/v2/base.css と skin.css（yorozu-plans DESIGN.md）。
    この begin〜end の間は手で直さない（tools/sync-common.mjs で全ツールに配る。ツール固有の上書きは end の後に書く） */
 /* yorozu-common v2 土台の層（yorozu-plans ROADMAP 7.98 D369、DESIGN.md）。すべてのページ（見せる・遊ぶ・世界を持つページも）に当てる。
@@ -68,69 +68,35 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 :where(html:not([data-skin="base"])) :where(.notice, [data-keep]) { border-left: 4px solid var(--text); background: var(--bg-2); padding: var(--sp-2) var(--sp-3); }
 :where(html:not([data-skin="base"])) :where(.fixed-bar) { position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--border); padding: var(--sp-2) var(--sp-4); }
 /* yorozu-common:end */
-/* yorozu-v1-carry — v1 の共通（和紙の色、2026-09-23〜10-17）から、このファイルのページが使っていた見た目をそのまま持ち込んだ（yorozu-plans ROADMAP 7.99、K192 段 3 の 0）。
-   段 3 の 2〜4 でこのページを v2 のトークンに載せ替えるときに、yorozu-v1-carry:end まで消す */
-:root {
-  color-scheme: light dark;
-  --bg: #f0ebe0; --bg-2: #e6dfd0; --card: #faf6ee; --text: #3a3025; --muted: #6e604f;
-  --accent: #8b4513; --accent-soft: #f3e6d8; --border: #cfc0a0; --input-border: #857561; --shadow: rgba(58, 48, 37, 0.12);
-  --error: #ce0000; --ok: #197a4b; --focus: #ffd43d; --focus-ring: #000;
-  --font-ui: "Noto Sans JP", "Noto Sans CJK JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  --lh-body: 1.7; --lh-tight: 1.4; --radius: 8px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1814; --bg-2: #25201a; --card: #2b251e; --text: #ece4d6; --muted: #b9ab96;
-    --accent: #e0a066; --accent-soft: #3a2e22; --border: #4a3f33; --input-border: #8c7d68; --shadow: rgba(0, 0, 0, 0.4);
-    --error: #ff8a7a; --ok: #6fcf97; --focus-ring: #ffd43d; --focus: #000;
-  }
-}
-body { font-family: var(--font-ui); background: var(--bg); color: var(--text); line-height: var(--lh-body); }
-a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-@media (hover: hover) { a:hover { text-decoration-thickness: 3px; } }
-:where(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
-.app-header > p { max-width: 40em; margin-left: auto; margin-right: auto; }
-/* yorozu-v1-carry:end */
-:root { font-family: var(--font-ui); }
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-a { color: var(--accent); }
-.kb-header { text-align: center; padding: 16px 16px 4px; }
-.kb-header h1 { font-size: 1.25rem; margin: 0; color: var(--accent); }
-.sub { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
-.kb-main { max-width: 760px; margin: 0 auto; padding: 8px 12px 24px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin: 10px 0; box-shadow: 0 1px 3px var(--shadow); }
+.kb-header { text-align: center; padding: var(--sp-4) var(--sp-4) var(--sp-1); }
+.sub { margin: var(--sp-1) 0 0; font-size: var(--fs-s); color: var(--muted); }
+.kb-main { max-width: 760px; margin: 0 auto; padding: var(--sp-2) var(--sp-3) var(--sp-6); }
+.card { margin: var(--sp-3) 0; }
 fieldset.card { min-width: 0; }
-.kb-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.kb-types { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
 .kb-types label { position: relative; }
 .kb-types input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-.kb-types span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 0.9rem; }
-.kb-types input:checked + span { background: var(--accent); color: #fff; border-color: var(--accent); }
-.kb-types input:focus-visible + span { outline: 2px solid var(--text); outline-offset: 2px; }
-.field { margin-bottom: 10px; }
-.field > label, .kb-pair label, .opt label { display: block; font-weight: 600; font-size: 0.9rem; }
-.opt label.inline { font-weight: 400; margin: 6px 0; }
-input[type="text"], input[type="number"], select {
-  display: block; width: 100%; max-width: 22rem; min-height: 44px; margin-top: 2px; padding: 0 10px;
-  border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit;
-}
-input[type="checkbox"] { width: 20px; height: 20px; vertical-align: -4px; margin-right: 6px; }
-.kb-pair { display: flex; flex-wrap: wrap; gap: 0 12px; }
-.kb-pair label { flex: 1 1 10rem; margin-bottom: 8px; }
-.hint { font-size: 0.8rem; color: var(--muted); margin: 4px 0; }
-.result { font-weight: 700; margin: 6px 0 0; }
-.small { font-size: 0.85rem; }
-.btn { min-height: 48px; padding: 0 20px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
-.btn-sub { min-height: 44px; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border); font-weight: 600; }
-.kb-btns { display: flex; flex-wrap: wrap; gap: 8px; }
-details.opt > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
-.fixbar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 44px; background: var(--card); border-bottom: 2px solid var(--accent); box-shadow: 0 2px 8px var(--shadow); }
-.fixbar button { display: block; width: 100%; max-width: 480px; margin: 0 auto; height: 42px; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
-.kb-footer { text-align: center; font-size: 0.8rem; color: var(--muted); padding: 12px; }
-.kb-footer ul { list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 0 14px; }
-.kb-footer a { display: inline-flex; min-height: 44px; align-items: center; }
+.kb-types span { display: inline-flex; align-items: center; min-height: var(--tap); padding: 0 var(--sp-3); border: 1px solid var(--input-border); border-radius: var(--radius); background: var(--card); font-weight: 700; }
+.kb-types input:checked + span { background: var(--accent-soft); border-color: var(--accent); }
+.kb-types input:focus-visible + span { outline: 4px solid var(--focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--focus); }
+.field { margin-bottom: var(--sp-3); }
+.field > label, .kb-pair label, .opt label { display: block; font-weight: 700; }
+.opt label.inline { display: flex; align-items: center; min-height: var(--tap); font-weight: 400; margin: var(--sp-1) 0; }
+input[type="text"], input[type="number"], select { display: block; width: 100%; max-width: 22rem; margin-top: 2px; }
+input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; margin-right: var(--sp-2); }
+.kb-pair { display: flex; flex-wrap: wrap; gap: 0 var(--sp-3); }
+.kb-pair label { flex: 1 1 10rem; margin-bottom: var(--sp-2); }
+.hint { font-size: var(--fs-s); color: var(--muted); margin: var(--sp-1) 0; }
+.result { font-weight: 700; margin: var(--sp-2) 0 0; }
+.small { font-size: var(--fs-s); }
+.btn { padding: 0 var(--sp-4); }
+.kb-btns { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+details.opt > summary { display: flex; align-items: center; }
+.fixed-bar { position: fixed; top: 0; bottom: auto; left: 0; right: 0; z-index: 50; border-top: 0; border-bottom: 1px solid var(--border); padding: 0; }
+.fixed-bar button { display: block; width: 100%; max-width: 480px; margin: 0 auto; border: 0; background: none; }
+.kb-footer { text-align: center; font-size: var(--fs-s); color: var(--muted); padding: var(--sp-3); }
+.kb-footer ul { list-style: none; margin: 0 0 var(--sp-2); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--sp-4); }
+.kb-footer a { display: inline-flex; min-height: var(--tap); align-items: center; }
 
 /* 見本（白い紙のまま。画面では縮めて見せる） */
 .sheet { background: #fff; color: #000; border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin: 10px 0; overflow-x: auto; color-scheme: light; }
@@ -171,6 +137,6 @@ details.opt > summary { min-height: 44px; display: flex; align-items: center; cu
 
 /* この道具について（結果の後ろの折りたたみ。使い方ページの要約。AdSense 審査 2026-10-04） */
 details.card.opt.about-tool > summary { white-space: normal; }   /* 長い summary を折り返す */
-details.about-tool h3 { font-size: 0.95rem; margin: 0.9rem 0 0.3rem; }
-details.about-tool p, details.about-tool li { font-size: 0.9rem; line-height: 1.75; }
-details.about-tool ul { padding-left: 1.2rem; margin: 0.3rem 0 0.5rem; }
+details.about-tool h3 { margin: var(--sp-4) 0 var(--sp-1); }
+details.about-tool p, details.about-tool li { line-height: 1.75; }
+details.about-tool ul { padding-left: 1.2rem; margin: var(--sp-1) 0 var(--sp-2); }

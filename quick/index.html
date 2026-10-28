@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-theme="washi">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,8 @@
   <meta property="og:image" content="https://yorozu-craft.com/easy-split/og-image.png">
   <meta property="og:site_name" content="yorozu-craft">
   <meta property="og:locale" content="ja_JP">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#eef0f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="/easy-split/manifest.webmanifest">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -46,7 +47,7 @@
       <h2 class="quick-label">1 人あたり</h2>
       <p id="qEach" class="quick-each">—</p>
       <p id="qOrg" class="quick-org"></p>
-      <button type="button" id="qSend" class="btn btn-line" disabled>LINE で送る</button>
+      <button type="button" id="qSend" class="btn-primary btn-line" disabled>LINE で送る</button>
     </section>
     <!-- data-keep: 入れたものの扱い（名前を入れない・保存しない）。A2 の「入力は端末の外に出ない」と同じ役目で、画面に置くと決めた文 -->
     <p class="quick-foot" data-keep>名前は入れません。入れた数はこの画面の中だけで、保存しません。</p>

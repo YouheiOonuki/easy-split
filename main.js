@@ -36,7 +36,6 @@
   const historyToggle = $('historyToggle');
   const historyList = $('historyList');
   const clearHistoryBtn = $('clearHistory');
-  const themeBtns = document.querySelectorAll('.theme-btn');
   const sharedNotice = $('sharedNotice');
   const backupExportBtn = $('backupExport');
   const backupImportBtn = $('backupImport');
@@ -44,7 +43,6 @@
   const backupMsg = $('backupMsg');
   const excludedLabel = $('excludedLabel');
 
-  const LS_THEME = 'easysplit_theme';
   const LS_HISTORY = 'easysplit_history';
   const LS_HISTORY_ON = 'easysplit_history_on';
   const LS_NAMES = 'easysplit_names';
@@ -295,7 +293,6 @@
 
   // ---- Init ----
   function init() {
-    loadTheme();
     historyToggle.checked = lsGet(LS_HISTORY_ON) !== '0';
     shareBtn.classList.toggle('hidden', !navigator.share);
 
@@ -394,20 +391,6 @@
     changed();
   }
 
-  // ---- Theme ----
-  function loadTheme() {
-    setTheme(lsGet(LS_THEME) || 'washi');   // 既定は和紙（共通テンプレート。束 A）
-  }
-
-  function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    lsSet(LS_THEME, theme);
-    themeBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.theme === theme);
-      btn.setAttribute('aria-pressed', String(btn.dataset.theme === theme));
-    });
-  }
-
   // ---- Participants ----
   function nextName() {
     const used = new Set(state.participants.map(p => p.name));
@@ -474,7 +457,7 @@
 
     const isFixed = p.fixed !== null;
     const fixedBtn = document.createElement('button');
-    fixedBtn.className = 'btn-fixed' + (isFixed ? ' active' : '');
+    fixedBtn.className = 'chip' + (isFixed ? ' active' : '');
     fixedBtn.textContent = '固定';
     fixedBtn.setAttribute('aria-pressed', String(isFixed));
     fixedBtn.setAttribute('aria-label', label + 'の金額を固定');
@@ -877,7 +860,7 @@
 
       if (entry.input && Array.isArray(entry.input.participants)) {
         const restore = document.createElement('button');
-        restore.className = 'btn-restore';
+        restore.className = 'btn btn-restore';
         restore.textContent = '↩ この内容を復元';
         restore.addEventListener('click', () => restoreHistory(entry));
         item.appendChild(restore);
@@ -949,8 +932,6 @@
       renderHistory();
     });
 
-    themeBtns.forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.theme)));
-
     // ---- Backup file (README「ツールを追加するとき」20。決定 D31) ----
     // 中身はこの端末の中で作り、どこにも送信しない。機種変更のときはファイルを移して読み込む
     backupExportBtn.addEventListener('click', () => {
@@ -958,8 +939,7 @@
         draft: state,
         names: lsJson(LS_NAMES, []),
         history: lsJson(LS_HISTORY, []),
-        historyOn: historyToggle.checked,
-        theme: document.documentElement.getAttribute('data-theme')
+        historyOn: historyToggle.checked
       };
       const blob = new Blob([JSON.stringify(EasySplit.buildBackup(TOOL, data), null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
@@ -996,7 +976,6 @@
         lsSet(LS_HISTORY_ON, historyToggle.checked ? '1' : '0');
         const history = historyToggle.checked ? EasySplit.normalizeHistory(r.data.history) : [];
         if (history.length) lsSet(LS_HISTORY, JSON.stringify(history)); else lsRemove(LS_HISTORY);
-        if ([...themeBtns].some(btn => btn.dataset.theme === r.data.theme)) setTheme(r.data.theme);
         applyStateToForm();
         changed();
         renderHistory();
