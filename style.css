@@ -233,7 +233,9 @@ a.btn { color: var(--text); }
 a.btn-primary { color: var(--on-accent); }
 .btn:disabled, .btn-primary:disabled, .stepper-btn:disabled { opacity: 0.5; cursor: default; }
 .btn-add { border-style: dashed; color: var(--muted); margin-top: var(--sp-2); }
+/* LINE で送る: LINE の緑は意味のある色なので皮の主の色にしない。#06c755 は白い字で 2.3:1 なので暗くして 5.5:1 */
 .btn-line { margin-top: var(--sp-3); }
+:where(html:not([data-skin="base"])) .btn-primary.btn-line { background: #047a35; border-color: #047a35; color: #fff; }
 .btn-secondary { margin-top: var(--sp-2); }
 .btn-link { border-color: transparent; background: transparent; color: var(--muted); font-weight: 400; text-decoration: underline; margin: 0 0 var(--sp-3); }
 .btn-restore { margin-top: var(--sp-2); }
