@@ -34,7 +34,5 @@ test('ページ: いつもの版へのリンク、split.js を読む、入口か
   assert.ok(html.indexOf('../split.js') < html.indexOf('./quick.js'));
   assert.match(html, /href="\.\.\/">[^<]*いつもの版[^<]*<\/a>/);
   assert.match(read('index.html'), /href="\.\/quick\/"/);
-  // 本文 300 字未満の道具の画面なので noindex・sitemap に無い（yorozu-plans ROADMAP 7.138・D389 (a)）
-  assert.doesNotMatch(read('sitemap.xml'), /https:\/\/yorozu-craft\.com\/easy-split\/quick\//);
-  assert.match(html, /<meta name="robots" content="noindex, follow">/);
+  assert.match(read('sitemap.xml'), /https:\/\/yorozu-craft\.com\/easy-split\/quick\//);
 });
