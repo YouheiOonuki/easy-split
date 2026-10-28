@@ -449,9 +449,6 @@ button.result-item { width: 100%; border: none; font: inherit; color: inherit; t
 .faq-list dt { margin-top: var(--sp-3); padding: var(--sp-1) 0; font-weight: 700; }
 .faq-list dt::before { content: 'Q. '; color: var(--accent); font-weight: 800; }
 .faq-list dd { color: var(--muted); margin-left: 0; padding: var(--sp-1) 0 var(--sp-2) 1.2rem; border-bottom: 1px solid var(--border); }
-.info-list { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-2) 1.2rem; margin: var(--sp-2) 0 var(--sp-4); }
-.info-list dt { font-weight: 700; }
-.info-list dd { margin: 0; color: var(--muted); }
 .guide-link { text-align: center; font-size: var(--fs-s); color: var(--muted); margin: var(--sp-1) 0 var(--sp-3); }
 
 /* ---- Footer ---- */
