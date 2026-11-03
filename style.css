@@ -446,7 +446,7 @@ button.result-item { width: 100%; border: none; font: inherit; color: inherit; t
 .content-section strong { color: var(--text); }
 .guide-content { margin-bottom: var(--sp-4); }
 .guide-step { margin-bottom: var(--sp-3); padding-left: var(--sp-2); border-left: 3px solid var(--accent); }
-.guide-step h2 { margin-top: 0; }
+.guide-step h3 { margin-top: 0; }
 .use-cases { list-style: none; padding-left: 0 !important; }
 .use-cases li::before { content: '▸ '; color: var(--accent); }
 .faq-list dt { margin-top: var(--sp-3); padding: var(--sp-1) 0; font-weight: 700; }
