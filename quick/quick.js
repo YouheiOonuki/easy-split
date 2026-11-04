@@ -50,6 +50,7 @@
     $('qOrg').textContent = q.extra.length ? q.extra.map(extraLine).join('、') : '端数なし';
     $('qSend').disabled = false;
     $('qSend').dataset.text = shareText(q);
+    window.yzUsed?.();
   }
 
   document.querySelectorAll('.qkey').forEach((b) => b.addEventListener('click', () => {
