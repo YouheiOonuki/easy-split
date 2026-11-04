@@ -627,6 +627,7 @@
     renderResults(lastResult);
     updateBar();
     updateSummaries();
+    window.yzUsed?.();
   }
 
   const yen = n => n.toLocaleString() + '円';

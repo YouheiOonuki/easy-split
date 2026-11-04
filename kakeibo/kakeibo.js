@@ -140,7 +140,7 @@
   }
 
   const bar = window.YorozuScreen.fixedBar({ bar: 'fixbar', watch: 'print', text: 'fixbar-text', onClick: () => window.print() });
-  function update() { render(); $('settle-out').textContent = settleText(); save(); }
+  function update() { render(); $('settle-out').textContent = settleText(); save(); window.yzUsed?.(); }
 
   document.querySelectorAll('input[name="type"]').forEach((el) => el.addEventListener('change', () => { st.type = el.value; update(); }));
   $('ym').addEventListener('change', () => { const [y, m] = $('ym').value.split('-').map(Number); st.y = y; st.m = m; update(); });
