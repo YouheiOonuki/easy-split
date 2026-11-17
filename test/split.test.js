@@ -157,5 +157,5 @@ test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
   assert.match(sw, /event\.respondWith\(networkFirst\(req, fromNetwork\)\)/);
   assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
-  assert.match(sw, /const CACHE = 'easy-split-v13';/);
+  assert.match(sw, /const CACHE = 'easy-split-v14';/);
 });

@@ -1,5 +1,5 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v13';
+const CACHE = 'easy-split-v14';
 const SHELL = [
   './',
   'index.html',
