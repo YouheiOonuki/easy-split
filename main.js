@@ -6,6 +6,8 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
+  const Bars = window.EasySplitBars;
+  const W = Bars.WEIGHT;
 
   const billTabs = $('billTabs');
   const billNameRow = $('billNameRow');
@@ -214,7 +216,7 @@
   function decodeShare(s) {
     const d = JSON.parse(fromBase64Url(s));
     if (!d || d.v !== 1 || !Array.isArray(d.p) || !Array.isArray(d.b) || !d.p.length || !d.b.length) return null;
-    const weight = w => Math.min(2, Math.max(0.5, Math.round(Number(w) * 10) / 10)) || 1;
+    const weight = w => Math.min(W.max, Math.max(W.min, Math.round(Number(w) * 10) / 10)) || 1;
     return normalizeState({
       participants: d.p.slice(0, 50).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 40), weight: weight(x[1]), fixed: x[2] })),
       bills: d.b.slice(0, 10).map((x, i) => ({ id: i, name: String(x[0]).slice(0, 20), total: x[1], excluded: x[2], absent: Array.isArray(x[3]) ? x[3] : [] })),
@@ -519,9 +521,9 @@
     slider.type = 'range';
     slider.id = sliderId;
     slider.className = 'weight-slider';
-    slider.min = '0.5';
-    slider.max = '2.0';
-    slider.step = '0.1';
+    slider.min = String(W.min);
+    slider.max = W.max.toFixed(1);
+    slider.step = String(W.step);
     slider.value = p.weight;
 
     const weightValue = document.createElement('span');
@@ -638,50 +640,18 @@
     return a.isOrganizer ? '幹事' : a.name;
   }
 
+  // 結果: 1 人に 1 行。名前（集金済みの切り替え）と、払う額の棒・額。行と棒の印は人ごとに使い回す（引いている印を作り直さない）
   function renderResults(r) {
-    resultList.innerHTML = '';
+    const bars = new Map(Bars.barRows(r).map(b => [b.id, b]));
+    const old = new Map([...resultList.children].map(el => [Number(el.dataset.id), el]));
 
-    r.results.forEach(x => {
-      // The organizer collects the money, so only the others get a check mark.
-      const collectable = !x.isOrganizer;
-      const paid = collectable && !!state.paid[x.id];
-      const item = document.createElement(collectable ? 'button' : 'div');
-      item.className = 'result-item' + (paid ? ' paid' : '');
-
-      const check = document.createElement('span');
-      check.className = 'check' + (collectable ? '' : ' none');
-      check.textContent = paid ? '✓' : '';
-
-      const name = document.createElement('span');
-      name.className = 'result-name';
-      name.textContent = x.name;
-      if (x.isOrganizer) name.appendChild(badge('幹事'));
-      if (x.isFixed) name.appendChild(badge('固定', 'badge-muted'));
-      if (r.bills.length > 1) {
-        const sub = document.createElement('small');
-        sub.className = 'result-sub';
-        sub.textContent = attendedLabel(r, x);
-        name.appendChild(sub);
-      }
-
-      const amount = document.createElement('span');
-      amount.className = 'result-amount';
-      amount.textContent = x.amount.toLocaleString() + ' 円';
-
-      item.append(check, name, amount);
-
-      if (collectable) {
-        item.setAttribute('aria-pressed', String(paid));
-        item.setAttribute('aria-label', x.name + ' ' + yen(x.amount) + (paid ? ' 集金済み' : ' 未集金'));
-        item.addEventListener('click', () => {
-          if (state.paid[x.id]) delete state.paid[x.id];
-          else state.paid[x.id] = true;
-          saveDraft();
-          renderResults(lastResult);
-        });
-      }
-      resultList.appendChild(item);
+    r.results.forEach((x, i) => {
+      const item = old.get(x.id) || resultRow(x.id);
+      old.delete(x.id);
+      fillResultRow(item, x, bars.get(x.id), r);
+      if (resultList.children[i] !== item) resultList.insertBefore(item, resultList.children[i] || null);
     });
+    old.forEach(el => el.remove());
 
     if (r.absorberId === null) {
       resultNote.textContent = '全員の金額が固定されています。';
@@ -696,6 +666,121 @@
       ' / 総額: ' + r.total.toLocaleString() + ' 円';
 
     renderCollectSummary(r);
+  }
+
+  function resultRow(id) {
+    const item = document.createElement('div');
+    item.className = 'result-item';
+    item.dataset.id = id;
+
+    const head = document.createElement('div');
+    head.className = 'result-head';
+
+    const bar = document.createElement('div');
+    bar.className = 'result-bar';
+    const fill = document.createElement('span');
+    fill.className = 'bar-fill';
+    const handle = document.createElement('button');
+    handle.type = 'button';
+    handle.className = 'bar-handle';
+    handle.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight');
+    handle.addEventListener('keydown', handleKey);
+    handle.addEventListener('pointerdown', handleDown);
+    handle.addEventListener('pointermove', handleMove);
+    handle.addEventListener('pointerup', handleUp);
+    handle.addEventListener('pointercancel', handleUp);
+    bar.append(fill, handle);
+
+    const amount = document.createElement('span');
+    amount.className = 'result-amount';
+
+    item.append(head, bar, amount);
+    return item;
+  }
+
+  function fillResultRow(item, x, b, r) {
+    // The organizer collects the money, so only the others get a check mark.
+    const collectable = !x.isOrganizer;
+    const paid = collectable && !!state.paid[x.id];
+    item.classList.toggle('paid', paid);
+
+    const toggle = document.createElement(collectable ? 'button' : 'div');
+    toggle.className = 'result-toggle';
+
+    const check = document.createElement('span');
+    check.className = 'check' + (collectable ? '' : ' none');
+    check.textContent = paid ? '✓' : '';
+
+    const name = document.createElement('span');
+    name.className = 'result-name';
+    name.textContent = x.name;
+    if (x.isOrganizer) name.appendChild(badge('幹事'));
+    if (x.isFixed) name.appendChild(badge('固定', 'badge-muted'));
+    if (r.bills.length > 1) {
+      const sub = document.createElement('small');
+      sub.className = 'result-sub';
+      sub.textContent = attendedLabel(r, x);
+      name.appendChild(sub);
+    }
+    toggle.append(check, name);
+
+    if (collectable) {
+      toggle.type = 'button';
+      toggle.setAttribute('aria-pressed', String(paid));
+      toggle.setAttribute('aria-label', x.name + ' ' + yen(x.amount) + (paid ? ' 集金済み' : ' 未集金'));
+      toggle.addEventListener('click', () => {
+        if (state.paid[x.id]) delete state.paid[x.id];
+        else state.paid[x.id] = true;
+        saveDraft();
+        renderResults(lastResult);
+      });
+    }
+    item.querySelector('.result-head').replaceChildren(toggle);
+
+    const p = state.participants.find(q => q.id === x.id);
+    item.querySelector('.bar-fill').style.width = b.pct + '%';
+    const handle = item.querySelector('.bar-handle');
+    handle.hidden = !b.movable || !p;
+    handle.style.left = b.pct + '%';
+    if (p) handle.setAttribute('aria-label', x.name + 'の係数 ' + p.weight.toFixed(1));
+    item.querySelector('.result-amount').textContent = x.amount.toLocaleString() + ' 円';
+  }
+
+  // ---- 棒の右端の印（Q-454）: 引く・← → で、その人の係数を欄の step 1 つずつ変える ----
+  // 係数の欄（range）に値を入れて input を送る。欄の側の処理（係数の表示・計算・保存）をそのまま通す
+  function setWeight(id, w) {
+    const p = state.participants.find(q => q.id === id);
+    const slider = $('weight-' + id);
+    if (!p || p.fixed !== null || !slider || p.weight === w) return;
+    slider.value = String(w);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const handleId = el => Number(el.closest('.result-item').dataset.id);
+  const weightOf = id => (state.participants.find(q => q.id === id) || {}).weight;
+
+  function handleKey(e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const id = handleId(this);
+    setWeight(id, Bars.stepWeight(weightOf(id), e.key === 'ArrowRight' ? 1 : -1));
+  }
+
+  let drag = null;
+  function handleDown(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    this.focus();
+    this.setPointerCapture(e.pointerId);
+    const id = handleId(this);
+    drag = { id, pointer: e.pointerId, x0: e.clientX, w0: weightOf(id), width: this.parentNode.getBoundingClientRect().width };
+  }
+  function handleMove(e) {
+    if (!drag || e.pointerId !== drag.pointer) return;
+    setWeight(drag.id, Bars.stepWeight(drag.w0, Bars.stepsFromDrag(e.clientX - drag.x0, drag.width)));
+  }
+  function handleUp(e) {
+    if (drag && e.pointerId === drag.pointer) drag = null;
   }
 
   function attendedLabel(r, x) {

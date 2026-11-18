@@ -321,7 +321,8 @@ input[type="number"] { -moz-appearance: textfield; }
 .chip.active { border-color: var(--accent); background: var(--accent-soft); }
 
 /* ---- Collection check ---- */
-button.result-item { width: 100%; border: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.result-toggle { display: flex; align-items: center; width: 100%; min-height: var(--tap); padding: 0; border: none; background: transparent; font: inherit; color: inherit; text-align: left; }
+button.result-toggle { cursor: pointer; }
 .result-item .check {
   width: 24px;
   height: 24px;
@@ -386,16 +387,31 @@ button.result-item { width: 100%; border: none; font: inherit; color: inherit; t
 .organizer-select-group select { flex: 1; }
 
 /* ---- Result ---- */
+/* 1 人 1 行: 上に名前（集金済みの切り替え）、下に払う額の棒と、その右に額（Q-454） */
 .result-item {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
+  gap: var(--sp-2);
   padding: var(--sp-3);
   margin-bottom: var(--sp-2);
   background: var(--accent-soft);
   border-radius: var(--radius);
 }
 .result-name { font-size: var(--fs-m); font-weight: 500; }
+.result-head { grid-column: 1 / -1; }
+/* 棒: 長さ = 額 ÷ いちばん多い額。右端の印（44px）は棒の端に中心を置くので、枠の左右に印の半分をあける */
+.result-bar { position: relative; height: var(--tap); margin: 0 calc(var(--tap) / 2); }
+.bar-fill { position: absolute; left: 0; top: 50%; height: 12px; transform: translateY(-50%); border-radius: 6px; background: var(--accent); }
+.bar-handle {
+  position: absolute; top: 0; width: var(--tap); height: var(--tap); min-height: var(--tap); padding: 0; margin: 0;
+  transform: translateX(-50%); display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: 50%; touch-action: none; cursor: ew-resize;
+}
+.bar-handle::before { content: ''; width: 24px; height: 24px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); box-sizing: border-box; }
+.bar-handle:hover::before, .bar-handle:active::before { background: var(--accent); }
+.bar-handle[hidden] { display: none; }
+.result-item.paid .bar-fill { opacity: 0.5; }
 .result-amount { font-size: var(--fs-l); font-weight: 800; color: var(--accent); }
 .result-total {
   text-align: right;
@@ -531,8 +547,8 @@ details.card.opt[open] > summary { border-bottom: 1px solid var(--border); margi
 /* 読み込み時のずれ（CLS）を抑える: 会計のタブと結果（行・端数の説明・合計・集金）は main.js が描くので、
    描く前から既定（3 人・6,000円）の高さを取っておく */
 .bill-tabs { min-height: 50px; }
-#resultList:empty { min-height: 277px; }
-@media (min-width: 600px) { #resultList:empty { min-height: 255px; } }
+#resultList:empty { min-height: 463px; }   /* 1 人の行は名前と棒の 2 段（Q-454 で 190px → 376px）。前の 277・255 に差の 186 を足した */
+@media (min-width: 600px) { #resultList:empty { min-height: 441px; } }
 .stepper-count:empty::before { content: '\00a0'; }
 
 /* この道具について（結果の後ろの折りたたみ。使い方ページの要約。AdSense 審査 2026-10-04） */

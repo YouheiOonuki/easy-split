@@ -1,10 +1,11 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v15';
+const CACHE = 'easy-split-v16';
 const SHELL = [
   './',
   'index.html',
   'style.css',
   'split.js',
+  'bars.js',
   'screen.js',
   'main.js',
   'reset-storage.js',
