@@ -157,5 +157,11 @@ test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
   assert.match(sw, /event\.respondWith\(networkFirst\(req, fromNetwork\)\)/);
   assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
-  assert.match(sw, /const CACHE = 'easy-split-v14';/);
+  assert.match(sw, /const CACHE = 'easy-split-v15';/);
+});
+
+test('sw.js は一覧を入れる要求を cache: reload で出す（古い HTTP キャッシュの写しを入れない。Q-442）', () => {
+  const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
+  assert.match(sw, /cache\.addAll\(SHELL\.map\(url => new Request\(url, \{ cache: 'reload' \}\)\)\)/);
+  assert.doesNotMatch(sw, /cache\.addAll\(SHELL\)/, '一覧をそのまま渡す形が残っていない');
 });
