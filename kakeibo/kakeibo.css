@@ -125,7 +125,8 @@ details.opt > summary { display: flex; align-items: center; }
 @media print {
   @page { size: A4 portrait; margin: 10mm; }
   body { background: #fff; }
-  body > :not(main), main > :not(.sheet), ins.adsbygoogle, .google-auto-placed, iframe { display: none !important; }
+  /* 紙を表だけにするのは、表（.sheet）を持つページ（家計簿の画面）だけ。使い方は本文がそのまま紙に出る（Q-468: 全ページで本文を隠して白紙になっていた） */
+  body:has(main > .sheet) > :not(main), main:has(> .sheet) > :not(.sheet), ins.adsbygoogle, .google-auto-placed, iframe { display: none !important; }
   .kb-main { max-width: none; padding: 0; }
   .sheet { border: 0; padding: 0; margin: 0; overflow: visible; }
   .sheet h2 { font-size: 14pt; }
