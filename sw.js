@@ -1,5 +1,5 @@
 /* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v14';
+const CACHE = 'easy-split-v15';
 const SHELL = [
   './',
   'index.html',
@@ -25,7 +25,12 @@ const SHELL = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  // 一覧はブラウザの HTTP キャッシュを通さず取る（古い写しを新しい名前のキャッシュに入れない。ほかの道具の sw.js と同じ形。yorozu-plans QUEUE Q-442）
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(SHELL.map(url => new Request(url, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 // Every tool on yorozu-craft.com shares this origin and its Cache Storage,
