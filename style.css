@@ -276,7 +276,7 @@ input[type="number"] { -moz-appearance: textfield; }
 .shared-line { display: block; font-size: var(--fs-s); color: var(--muted); margin-top: 2px; }
 .shared-notice a { color: inherit; font-weight: 700; }
 .next-link { margin-top: var(--sp-2); }
-.next-link a, .guide-link a { display: inline-flex; align-items: center; min-height: var(--tap); }
+.next-link a, .guide-link a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); min-width: var(--tap); }
 .card .next-link a { color: var(--text); }
 
 @media (max-width: 480px) {
@@ -480,8 +480,8 @@ button.result-toggle { cursor: pointer; }
   border-top: 1px solid var(--border);
   margin-top: var(--sp-2);
 }
-.footer-nav ul { list-style: none; display: flex; justify-content: center; gap: 0 var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-2); }
-.footer-nav a { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--muted); text-decoration: none; }
+.footer-nav ul { list-style: none; display: flex; justify-content: center; gap: var(--sp-2) var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-2); }
+.footer-nav a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); min-width: var(--tap); color: var(--muted); text-decoration: none; }
 .footer-nav a:hover, .footer-nav a[aria-current="page"] { color: var(--accent); }
 .copyright { color: var(--muted); margin-top: var(--sp-1); }
 

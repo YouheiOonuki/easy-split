@@ -86,10 +86,11 @@ fieldset.card { min-width: 0; }
 .kb-types input:focus-visible + span { outline: 4px solid var(--focus-ring); outline-offset: 2px; box-shadow: 0 0 0 2px var(--focus); }
 .field { margin-bottom: var(--sp-3); }
 .field > label, .kb-pair label, .opt label { display: block; font-weight: 700; }
-.opt label.inline { display: flex; align-items: center; min-height: var(--tap); font-weight: 400; margin: var(--sp-1) 0; }
+.opt label.inline { display: flex; align-items: center; min-height: var(--tap); font-weight: 400; margin: var(--sp-2) 0; }
 input[type="text"], input[type="number"], select { display: block; width: 100%; max-width: 22rem; margin-top: 2px; }
 input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; margin-right: var(--sp-2); }
 .kb-pair { display: flex; flex-wrap: wrap; gap: 0 var(--sp-3); }
+.field .kb-pair { margin-top: var(--sp-2); }
 .kb-pair label { flex: 1 1 10rem; margin-bottom: var(--sp-2); }
 .hint { font-size: var(--fs-s); color: var(--muted); margin: var(--sp-1) 0; }
 .result { font-weight: 700; margin: var(--sp-2) 0 0; }
@@ -97,10 +98,11 @@ input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; margin-right
 .btn { padding: 0 var(--sp-4); }
 .kb-btns { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 details.opt > summary { display: flex; align-items: center; }
+details.opt[open] > summary { margin-bottom: var(--sp-2); }
 .fixed-bar { position: fixed; top: 0; bottom: auto; left: 0; right: 0; z-index: 50; border-top: 0; border-bottom: 1px solid var(--border); padding: 0; }
 .fixed-bar button { display: block; width: 100%; max-width: 480px; margin: 0 auto; border: 0; background: none; }
 .kb-footer { text-align: center; font-size: var(--fs-s); color: var(--muted); padding: var(--sp-3); }
-.kb-footer ul { list-style: none; margin: 0 0 var(--sp-2); display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--sp-4); }
+.kb-footer ul { list-style: none; margin: 0 0 var(--sp-2); display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-2) var(--sp-4); }
 .kb-footer a { display: inline-flex; min-height: var(--tap); align-items: center; }
 
 /* 見本（白い紙のまま。画面では縮めて見せる） */
