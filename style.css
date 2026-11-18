@@ -542,6 +542,13 @@ details.card.opt[open] > summary { border-bottom: 1px solid var(--border); margi
   /* 印刷では折りたたみの中も出す */
   main details::details-content { content-visibility: visible; display: block; }
   main details > summary::before { content: none; }
+  /* 紙は操作しないので、押すためだけの物は出さない（yorozu-plans QUEUE Q-593）。値を持つ欄（名前・金額・係数）と、
+     値を字で持つボタン（会計のタブ・結果の名前・参加の印）は残す */
+  .bar-handle, .stepper-btn, .bill-add, #removeBill,
+  .participant-row > .chip, .participant-row .btn-remove, .participant-row .preset-row .chip,
+  #addParticipantBottom, #lineBtn, #shareBtn, #copyBtn, #resetBtn,
+  #clearHistory, #backupExport, #backupImport, [data-reset-storage], .btn-restore, .shared-new,
+  body:has(#resultSection) .footer-nav { display: none !important; }
 }
 
 /* 読み込み時のずれ（CLS）を抑える: 会計のタブと結果（行・端数の説明・合計・集金）は main.js が描くので、
