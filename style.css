@@ -549,6 +549,9 @@ details.card.opt[open] > summary { border-bottom: 1px solid var(--border); margi
   #addParticipantBottom, #lineBtn, #shareBtn, #copyBtn, #resetBtn,
   #clearHistory, #backupExport, #backupImport, [data-reset-storage], .btn-restore, .shared-new,
   body:has(#resultSection) .footer-nav { display: none !important; }
+  /* 値を字で持つボタン（会計のタブ＝会計の名前と金額、結果の名前＝名前と集金の ✓）は、枠と地を消して字として出す
+     （yorozu-plans QUEUE Q-593・条件 37）。開いているタブの色も消す */
+  .bill-tab, .bill-tab.active, .result-toggle { border: 0; background: none; padding: 0; color: inherit; }
 }
 
 /* 読み込み時のずれ（CLS）を抑える: 会計のタブと結果（行・端数の説明・合計・集金）は main.js が描くので、
