@@ -287,7 +287,7 @@
     if (shared === null) showNotice('共有リンクを読み込めませんでした。');
     if (!shared) return loadDraft();
     const hasDraft = lsGet(LS_DRAFT) !== null;
-    if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は上書きされます）')) return loadDraft();
+    if (hasDraft && !confirm('共有された計算内容を読み込みますか？（今の入力は置き換わります）')) return loadDraft();
     const fromShiori = cameFromShiori();
     showNotice(fromShiori ? '旅のしおりから渡されたメンバーと費用を表示しています' : '共有された計算内容を表示しています', true, fromShiori);
     return shared;
@@ -912,7 +912,7 @@
   }
 
   function restoreHistory(entry) {
-    if (!confirm('この内容を入力に復元しますか？（今の入力は上書きされます）')) return;
+    if (!confirm('この内容を入力に復元しますか？（今の入力は置き換わります）')) return;
     state = normalizeState(Object.assign({}, entry.input, { paid: {} }));
     applyStateToForm();
     changed();
