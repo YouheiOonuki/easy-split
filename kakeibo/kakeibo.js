@@ -178,7 +178,7 @@
     try {
       const obj = JSON.parse(await f.text());
       if (!obj || obj.tool !== 'easy-split' || !obj.data || !obj.data[KEY]) throw new Error('tool');
-      if (!confirm('ファイルの内容で、いまの入力を上書きしますか？')) return;
+      if (!confirm('ファイルの内容で、いまの入力を置き換えますか？')) return;
       st = K.normalize(obj.data[KEY], today);
       sync(); update();
       $('save-msg').textContent = 'ファイルから読み込みました。';
