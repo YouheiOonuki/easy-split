@@ -1052,7 +1052,7 @@
               !d.participants.every(p => p && Number.isInteger(p.id))) throw new Error('no participants');
           next = normalizeState(d);
         } catch {
-          backupMsg.textContent = 'ファイルの中身が正しくないため読み込めません。';
+          backupMsg.textContent = 'ファイルの中身が正しくないため読み込めません。この道具の「ファイルに書き出す」で保存したファイルを選んでください。';
           return;
         }
         if (!confirm('ファイルの内容で、今の入力・履歴・名前の候補・設定を置き換えます。よろしいですか？')) return;
