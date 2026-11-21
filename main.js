@@ -474,7 +474,7 @@
     const removeBtn = document.createElement('button');
     removeBtn.className = 'btn-remove';
     removeBtn.textContent = '✕';
-    removeBtn.setAttribute('aria-label', label + 'を削除');
+    removeBtn.setAttribute('aria-label', label + 'を消す');
     removeBtn.addEventListener('click', () => removeParticipant(p.id));
 
     row.append(nameInput, fixedBtn, removeBtn);

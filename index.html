@@ -84,7 +84,7 @@
       <div id="billTabs" class="bill-tabs"></div>
       <div id="billNameRow" class="bill-name-row hidden">
         <input type="text" id="billName" class="participant-name" aria-label="会計の名前" placeholder="会計の名前">
-        <button id="removeBill" class="btn-remove" aria-label="この会計を削除">✕</button>
+        <button id="removeBill" class="btn-remove" aria-label="この会計を消す">✕</button>
       </div>
       <div class="amount-input-group">
         <input type="number" id="totalAmount" inputmode="numeric" placeholder="合計金額を入力" min="0" step="100" aria-label="合計金額">
@@ -150,7 +150,7 @@
           <label class="unit-option"><input type="radio" name="unit" value="10"><span>10円</span></label>
           <label class="unit-option"><input type="radio" name="unit" value="100"><span>100円</span></label>
           <label class="unit-option"><input type="radio" name="unit" value="500"><span>500円</span></label>
-          <label class="unit-option"><input type="radio" name="unit" value="1000"><span>1000円</span></label>
+          <label class="unit-option"><input type="radio" name="unit" value="1000"><span>1,000円</span></label>
         </div>
         <p class="field-hint center" id="unitHint"></p>
       </details>
@@ -165,7 +165,7 @@
       </details>
     </div>
 
-    <button id="resetBtn" class="btn btn-link">入力をリセット</button>
+    <button id="resetBtn" class="btn btn-link">入力を消す</button>
 
     <!-- 履歴とファイルへの書き出し -->
     <details class="card opt" id="opt-history">
@@ -178,7 +178,7 @@
         </label>
       </div>
       <div id="historyList"></div>
-      <button id="clearHistory" class="btn btn-secondary hidden">履歴をクリア</button>
+      <button id="clearHistory" class="btn btn-secondary hidden">履歴を消す</button>
       <button id="backupExport" class="btn btn-secondary">ファイルに書き出す</button>
       <button id="backupImport" class="btn btn-secondary">ファイルから読み込む</button>
       <button type="button" class="btn btn-secondary" data-reset-storage="easysplit_">保存した内容をすべて消す（初期状態に戻す）</button>
