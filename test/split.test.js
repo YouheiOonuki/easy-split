@@ -158,7 +158,7 @@ test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で
   assert.match(sw, /event\.respondWith\(networkFirst\(request, fromNetwork\)\)/);
   assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
   assert.match(sw, /const CACHE_PREFIX = 'easy-split-';/);
-  assert.match(sw, /const CACHE_NAME   = `\$\{CACHE_PREFIX\}v17`;/);
+  assert.match(sw, /const CACHE_NAME   = `\$\{CACHE_PREFIX\}v18`;/);
 });
 
 test('sw.js のつながらない時の戻り先は ./（yorozu-template の sw.js と同じ形。Q-883）', () => {
@@ -172,4 +172,9 @@ test('sw.js は一覧を入れる要求を cache: reload で出す（古い HTTP
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
   assert.match(sw, /cache\.addAll\(PRECACHE_URLS\.map\(\(url\) => new Request\(url, \{ cache: 'reload' \}\)\)\)/);
   assert.doesNotMatch(sw, /cache\.addAll\(PRECACHE_URLS\)/, '一覧をそのまま渡す形が残っていない');
+});
+
+test('sw.js の一覧に quick/ と quick/ だけが読む quick.js が在る（つながらない時に入口へ戻されない。Q-924）', () => {
+  const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
+  for (const f of ['quick/', 'quick/index.html', 'quick/quick.js']) assert.ok(sw.includes(`'${f}'`), f);
 });
