@@ -1,0 +1,15 @@
+{
+  "src": "reset-storage.js",
+  "prefixes": [
+    "easysplit_"
+  ],
+  "legacy": [],
+  "pagePrefixes": {
+    "kakeibo/index.html": [
+      "easysplit_kakeibo"
+    ]
+  },
+  "pageLegacy": {},
+  "inline": [],
+  "skipDirs": []
+}

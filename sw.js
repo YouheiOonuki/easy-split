@@ -10,7 +10,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'easy-split-';
-const CACHE_NAME   = `${CACHE_PREFIX}v17`; // キャッシュする中身の構成を変えたら上げる（v17: 取り方を yorozu-template の sw.js にそろえた）
+const CACHE_NAME   = `${CACHE_PREFIX}v18`; // キャッシュする中身の構成を変えたら上げる（v18: 手早く割る版 quick/ を一覧に足した）
 
 /** 初回インストール時に取得しておくファイル */
 const PRECACHE_URLS = [
@@ -35,6 +35,10 @@ const PRECACHE_URLS = [
   'kakeibo/kakeibo-calc.js',
   'kakeibo/kakeibo.js',
   'kakeibo/guide.html',
+  // 手早く割る版（/easy-split/quick/。style.css・split.js は上で入れている）
+  'quick/',
+  'quick/index.html',
+  'quick/quick.js',
   // 運営者情報・プライバシーポリシーは yorozu-craft 共通ページ（../about.html 等）に移したのでキャッシュしない
 ];
 
