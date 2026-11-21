@@ -1,6 +1,19 @@
-/* easy-split service worker — offline support for the app shell */
-const CACHE = 'easy-split-v16';
-const SHELL = [
+/**
+ * easy-split - sw.js（Service Worker。オフライン対応にするツールだけ使う）
+ * hoshizora-sanpo の sw.js と同じ方針:
+ * - ネットワーク優先。オンラインなら常に最新を取得してキャッシュも更新し、オフライン（または応答が遅い）ときだけキャッシュを返す
+ * - yorozu-craft.com の各ツールは同じオリジンでキャッシュ領域を共有するため、
+ *   キャッシュ名には必ず "easy-split-" を付け、ほかのツールのキャッシュには触れない
+ * - 自分のパス配下だけを扱う。広告・アクセス解析など別オリジンや、ほかのツールのファイルは横取りしない
+ */
+
+'use strict';
+
+const CACHE_PREFIX = 'easy-split-';
+const CACHE_NAME   = `${CACHE_PREFIX}v17`; // キャッシュする中身の構成を変えたら上げる（v17: 取り方を yorozu-template の sw.js にそろえた）
+
+/** 初回インストール時に取得しておくファイル */
+const PRECACHE_URLS = [
   './',
   'index.html',
   'style.css',
@@ -21,65 +34,68 @@ const SHELL = [
   'kakeibo/kakeibo.css',
   'kakeibo/kakeibo-calc.js',
   'kakeibo/kakeibo.js',
-  'kakeibo/guide.html'
+  'kakeibo/guide.html',
   // 運営者情報・プライバシーポリシーは yorozu-craft 共通ページ（../about.html 等）に移したのでキャッシュしない
 ];
 
-self.addEventListener('install', event => {
-  // 一覧はブラウザの HTTP キャッシュを通さず取る（古い写しを新しい名前のキャッシュに入れない。ほかの道具の sw.js と同じ形。yorozu-plans QUEUE Q-442）
-  event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(SHELL.map(url => new Request(url, { cache: 'reload' }))))
-      .then(() => self.skipWaiting())
-  );
-});
-
-// Every tool on yorozu-craft.com shares this origin and its Cache Storage,
-// so only clean up easy-split's own old caches, never another tool's.
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('easy-split-') && k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
-// Same-origin GET only (ads and other third parties go straight to the network).
-// Serve from cache immediately and refresh it in the background, so an update
-// deployed to GitHub Pages shows up on the next visit.
-// ネットワーク優先（yorozu-plans ROADMAP 7.42 D309: HTML をキャッシュ優先で返すと、公開した新しい画面が出ず古い画面が残る）。
-// オンラインなら常にネットワークの応答を返してキャッシュも更新し、オフライン（または 4 秒応答が無い）ときだけキャッシュを返す。
-// ほかのツールと同じ形（yorozu-template の sw.js）
+/** この時間ネットワークが応答しなければ、キャッシュがあればそちらを返す */
 const NETWORK_TIMEOUT_MS = 4000;
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  if (!new URL(req.url).pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
-
-  const fromNetwork = fetch(req);
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    fromNetwork
-      .then(res => {
-        if (!res.ok || res.redirected) return undefined;
-        const copy = res.clone();
-        return caches.open(CACHE).then(cache => cache.put(req, copy));
-      })
-      .catch(() => undefined)
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRECACHE_URLS.map((url) => new Request(url, { cache: 'reload' }))))
+      .then(() => self.skipWaiting()),
   );
-  event.respondWith(networkFirst(req, fromNetwork));
 });
 
-async function networkFirst(req, fromNetwork) {
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)   // 自分のキャッシュだけ掃除する
+          .map((key) => caches.delete(key)),
+      ))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  // 同じオリジンでも、ほかのツールのファイルには手を出さない
+  if (!url.pathname.startsWith(new URL('./', self.registration.scope).pathname)) return;
+
+  const fromNetwork = fetch(request);
+  event.waitUntil(
+    fromNetwork
+      .then((response) => {
+        if (!response.ok || response.redirected) return undefined;
+        const copy = response.clone();
+        return caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+      })
+      .catch(() => undefined),
+  );
+  event.respondWith(networkFirst(request, fromNetwork));
+});
+
+async function networkFirst(request, fromNetwork) {
   try {
-    const res = await Promise.race([fromNetwork, new Promise(resolve => setTimeout(resolve, NETWORK_TIMEOUT_MS, null))]);
-    if (res) return res;
-  } catch (e) {
+    const response = await Promise.race([fromNetwork, delay(NETWORK_TIMEOUT_MS)]);
+    if (response) return response;
+  } catch {
     // オフライン: 下でキャッシュを探す
   }
-  const cache = await caches.open(CACHE);
-  const cached = req.mode === 'navigate'
-    ? (await cache.match(req, { ignoreSearch: true })) || cache.match('index.html')
-    : await cache.match(req);
+  const cache = await caches.open(CACHE_NAME);
+  const cached = request.mode === 'navigate'
+    ? (await cache.match(request, { ignoreSearch: true })) || cache.match('./')
+    : await cache.match(request);
   return cached || fromNetwork;
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms, null));
 }
