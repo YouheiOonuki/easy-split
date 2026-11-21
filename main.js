@@ -1013,7 +1013,7 @@
     });
 
     clearHistoryBtn.addEventListener('click', () => {
-      if (!confirm('履歴をすべて削除しますか？')) return;
+      if (!confirm('履歴をすべて削除しますか？ 元に戻せません。')) return;
       lsRemove(LS_HISTORY);
       renderHistory();
     });
