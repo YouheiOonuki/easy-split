@@ -247,7 +247,7 @@ input[type="number"] { -moz-appearance: textfield; }
 .btn-restore { margin-top: var(--sp-2); }
 
 /* ---- Explanatory content / guides ---- */
-.guide-title { font-size: var(--fs-l); line-height: var(--lh-tight); margin-bottom: var(--sp-3); }
+.guide-title { line-height: var(--lh-tight); margin-bottom: var(--sp-3); }
 .content { line-height: 1.8; }
 .content h3 { margin: var(--sp-6) 0 var(--sp-2); padding-left: var(--sp-2); border-left: 3px solid var(--accent); }
 .content p + p { margin-top: var(--sp-2); }
@@ -572,7 +572,7 @@ details.about-tool ul { padding-left: 1.2rem; margin: var(--sp-1) 0 var(--sp-2);
 
 /* スマホ版（quick/。yorozu-plans ROADMAP 7.41.3 K176）: 縦 1 画面（390×844）に収める */
 .quick-main { max-width: 420px; margin: 0 auto; padding: 10px var(--sp-4) var(--sp-3); }
-.quick-title { font-size: var(--fs-l); margin: 0 0 var(--sp-2); }
+.quick-title { margin: 0 0 var(--sp-2); }
 .quick-label { font-size: var(--fs-s); font-weight: normal; color: var(--muted); }
 .quick-total { display: block; margin: 0 0 var(--sp-2); }
 .quick-row { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-1) 0; }
