@@ -439,10 +439,10 @@ button.result-toggle { cursor: pointer; }
   background-color: var(--bg-2);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
-  gap: 0 var(--sp-3);
+  gap: var(--sp-2) var(--sp-3);
 }
 .nav-brand { display: inline-flex; align-items: center; min-height: var(--tap); font-weight: 700; text-decoration: none; }
-.nav-links { list-style: none; display: flex; gap: 0 var(--sp-4); flex-wrap: wrap; }
+.nav-links { list-style: none; display: flex; gap: var(--sp-2) var(--sp-4); flex-wrap: wrap; }
 .nav-links a { display: inline-flex; align-items: center; min-height: var(--tap); color: var(--muted); text-decoration: none; font-size: var(--fs-s); }
 .nav-links a:hover, .nav-links a[aria-current="page"] { color: var(--accent); }
 @media (max-width: 600px) {
