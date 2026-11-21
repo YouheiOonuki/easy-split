@@ -155,13 +155,21 @@ test('allocate distributes by largest remainder', () => {
 
 test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で返さない）。オフラインのときだけキャッシュ', () => {
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
-  assert.match(sw, /event\.respondWith\(networkFirst\(req, fromNetwork\)\)/);
+  assert.match(sw, /event\.respondWith\(networkFirst\(request, fromNetwork\)\)/);
   assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
-  assert.match(sw, /const CACHE = 'easy-split-v16';/);
+  assert.match(sw, /const CACHE_PREFIX = 'easy-split-';/);
+  assert.match(sw, /const CACHE_NAME   = `\$\{CACHE_PREFIX\}v17`;/);
+});
+
+test('sw.js のつながらない時の戻り先は ./（yorozu-template の sw.js と同じ形。Q-883）', () => {
+  const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
+  assert.match(sw, /\(await cache\.match\(request, \{ ignoreSearch: true \}\)\) \|\| cache\.match\('\.\/'\)/);
+  assert.doesNotMatch(sw, /cache\.match\('index\.html'\)/, '前の戻り先 index.html が残っていない');
+  assert.ok(sw.includes("'./',"), '戻り先の ./ を一覧に持つ');
 });
 
 test('sw.js は一覧を入れる要求を cache: reload で出す（古い HTTP キャッシュの写しを入れない。Q-442）', () => {
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
-  assert.match(sw, /cache\.addAll\(SHELL\.map\(url => new Request\(url, \{ cache: 'reload' \}\)\)\)/);
-  assert.doesNotMatch(sw, /cache\.addAll\(SHELL\)/, '一覧をそのまま渡す形が残っていない');
+  assert.match(sw, /cache\.addAll\(PRECACHE_URLS\.map\(\(url\) => new Request\(url, \{ cache: 'reload' \}\)\)\)/);
+  assert.doesNotMatch(sw, /cache\.addAll\(PRECACHE_URLS\)/, '一覧をそのまま渡す形が残っていない');
 });
