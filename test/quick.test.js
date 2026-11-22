@@ -34,5 +34,8 @@ test('ページ: いつもの版へのリンク、split.js を読む、入口か
   assert.ok(html.indexOf('../split.js') < html.indexOf('./quick.js'));
   assert.match(html, /href="\.\.\/">[^<]*いつもの版[^<]*<\/a>/);
   assert.match(read('index.html'), /href="\.\/quick\/"/);
-  assert.match(read('sitemap.xml'), /https:\/\/yorozu-craft\.com\/easy-split\/quick\//);
+  // 索引からは外す（ページと入口のリンクは残す。yorozu-plans D864・D877・D899・Q-1135）: noindex だけ。canonical は自分のまま、sitemap に載せない
+  assert.match(html, /<link rel="canonical" href="https:\/\/yorozu-craft\.com\/easy-split\/quick\/">/);
+  assert.match(html, /<meta name="robots" content="noindex">/);
+  assert.doesNotMatch(read('sitemap.xml'), /https:\/\/yorozu-craft\.com\/easy-split\/quick\//);
 });
