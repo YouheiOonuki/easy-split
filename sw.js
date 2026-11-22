@@ -10,7 +10,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'easy-split-';
-const CACHE_NAME   = `${CACHE_PREFIX}v18`; // キャッシュする中身の構成を変えたら上げる（v18: 手早く割る版 quick/ を一覧に足した）
+const CACHE_NAME   = `${CACHE_PREFIX}v19`; // キャッシュする中身の構成を変えたら上げる（v19: 3 ページが読む used.js を一覧に足した）
 
 /** 初回インストール時に取得しておくファイル */
 const PRECACHE_URLS = [
@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
   'screen.js',
   'main.js',
   'reset-storage.js',
+  'used.js',
   'manifest.webmanifest',
   'favicon.svg',
   'icon-192.png',

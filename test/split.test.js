@@ -158,7 +158,7 @@ test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で
   assert.match(sw, /event\.respondWith\(networkFirst\(request, fromNetwork\)\)/);
   assert.doesNotMatch(sw, /return cached \|\| network;/, '前のキャッシュ優先の形が残っていない');
   assert.match(sw, /const CACHE_PREFIX = 'easy-split-';/);
-  assert.match(sw, /const CACHE_NAME   = `\$\{CACHE_PREFIX\}v18`;/);
+  assert.match(sw, /const CACHE_NAME   = `\$\{CACHE_PREFIX\}v19`;/);
 });
 
 test('sw.js のつながらない時の戻り先は ./（yorozu-template の sw.js と同じ形。Q-883）', () => {
@@ -177,4 +177,29 @@ test('sw.js は一覧を入れる要求を cache: reload で出す（古い HTTP
 test('sw.js の一覧に quick/ と quick/ だけが読む quick.js が在る（つながらない時に入口へ戻されない。Q-924）', () => {
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
   for (const f of ['quick/', 'quick/index.html', 'quick/quick.js']) assert.ok(sw.includes(`'${f}'`), f);
+});
+
+test('sw.js の一覧に在るページの html が読む、同じ repo の js・css が、全部一覧に在る（つながらない時に読み込みが落ちない。Q-935）', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const listBody = sw.match(/const PRECACHE_URLS = \[([\s\S]*?)\];/)[1];
+  const list = new Set([...listBody.matchAll(/^\s*'([^']+)'/gm)].map((m) => m[1]));
+  const pages = [...list].filter((f) => f.endsWith('.html'));
+  assert.ok(pages.length >= 5, '一覧のページを拾えている');
+  const missing = [];
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(root, page), 'utf8');
+    const refs = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"/g)].map((m) => m[1] || m[2]);
+    for (const ref of refs) {
+      if (/^(https?:)?\/\//.test(ref) || ref.startsWith('/')) continue; // 外の host・repo の外は数えない
+      const clean = ref.split(/[?#]/)[0];
+      if (!/\.(js|css)$/.test(clean)) continue;
+      const rel = path.posix.normalize(path.posix.join(path.posix.dirname(page), clean));
+      assert.ok(fs.existsSync(path.join(root, rel)), `${page} が読む ${rel} が repo に在る`);
+      if (!list.has(rel)) missing.push(`${page} → ${rel}`);
+    }
+  }
+  assert.deepEqual(missing, [], '一覧に無いファイル');
 });
