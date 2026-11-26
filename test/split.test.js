@@ -163,9 +163,15 @@ test('sw.js はネットワーク優先（D309: HTML をキャッシュ優先で
 
 test('sw.js のつながらない時の戻り先は ./（yorozu-template の sw.js と同じ形。Q-883）', () => {
   const sw = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'sw.js'), 'utf8');
-  assert.match(sw, /\(await cache\.match\(request, \{ ignoreSearch: true \}\)\) \|\| cache\.match\('\.\/'\)/);
+  // 戻り方は枠の中（正本 tools/common/sw-frame.js）で、root の tests/sw-frame.test.mjs が動かして見る。ここは枠の外と、枠の印が在る事だけを見る（D1137）
+  const begin = sw.indexOf('/* yorozu-common:begin sw');
+  const end = sw.indexOf('/* yorozu-common:end */');
+  assert.ok(begin >= 0 && end > begin, '枠の印が begin・end の順に在る');
+  assert.equal(sw.indexOf('/* yorozu-common:begin sw', begin + 1), -1, 'begin は 1 回');
+  assert.equal(sw.indexOf('/* yorozu-common:end */', end + 1), -1, 'end は 1 回');
   assert.doesNotMatch(sw, /cache\.match\('index\.html'\)/, '前の戻り先 index.html が残っていない');
-  assert.ok(sw.includes("'./',"), '戻り先の ./ を一覧に持つ');
+  const list = sw.slice(sw.indexOf('const PRECACHE_URLS = ['), sw.indexOf('];', sw.indexOf('const PRECACHE_URLS = [')));
+  assert.ok(list.includes("'./'"), '戻り先の ./ を一覧に持つ');
 });
 
 test('sw.js は一覧を入れる要求を cache: reload で出す（古い HTTP キャッシュの写しを入れない。Q-442）', () => {
